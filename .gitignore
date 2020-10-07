@@ -2,3 +2,5 @@ venv/
 venv36/
 edufinder/edufinder/secrets.py
 edufinder/db.sqlite3
+edufinder/static/admin/
+edufinder.sock
