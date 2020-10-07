@@ -28,7 +28,7 @@ SECRET_KEY = secrets.SECRET_KEY
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ["edufinder.dk"]
+ALLOWED_HOSTS = ['edufinder.dk', '127.0.0.1']
 
 
 # Application definition
