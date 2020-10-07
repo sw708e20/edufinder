@@ -1,2 +1,4 @@
 venv/
 venv36/
+edufinder/edufinder/secrets.py
+edufinder/db.sqlite3
