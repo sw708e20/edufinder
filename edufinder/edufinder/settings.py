@@ -14,9 +14,42 @@ import os
 
 from . import secrets
 from pathlib import Path
+from configparser import ConfigParser
+from io import StringIO
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
+
+
+defaults = u"""
+[general]
+SECRET_KEY=_Secret_
+X_FRAME_OPTIONS = SAMEORIGIN
+
+[debug]
+DEBUG = True
+CSRF_COOKIE_SECURE = False
+CSRF_COOKIE_HTTPONLY = False
+SESSION_COOKIT_SECURE = False
+SECURE_BROWSER_XSS_FILTER = False
+SECURE_CONTENT_TYPE_NOSNIFF = False
+
+[database]
+ENGINE = django.db.backends.sqlite3
+HOST =
+PORT =
+NAME = db.sqlite3
+USER =
+PASSWORD =
+
+[hostnames]
+2=127.0.0.1
+3=localhost
+"""
+
+cfg = ConfigParser()
+cfg.read_file(StringIO(defaults))
+cfg.read(os.path.join(BASE_DIR, "local.cfg"))
 
 
 # Quick-start development settings - unsuitable for production
@@ -79,11 +112,14 @@ WSGI_APPLICATION = 'edufinder.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': cfg.get("database", "ENGINE"),
+        'HOST': cfg.get("database", "HOST"),
+        'PORT': cfg.get("database", "PORT"),
+        'NAME': cfg.get("database", "NAME"),
+        'USER': cfg.get("database", "USER"),
+        'PASSWORD': cfg.get("database", "PASSWORD"),
     }
 }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/3.1/ref/settings/#auth-password-validators
