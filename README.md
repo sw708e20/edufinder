@@ -24,6 +24,7 @@ $ pip install -r requirements.txt
 
 Change directory to `/path/to/edufinder/edufinder` and run
 ```shell script
+$ python manage.py migrate
 $ python manage.py runserver
 ```
 You should now be able to access the application at [localhost:8000](http://localhost:8000/).
@@ -32,6 +33,7 @@ You should now be able to access the application at [localhost:8000](http://loca
 
 ### Prerequisites
 - Install `nginx`
+- Install `default-libmysqlclient-dev`
 
 ```shell script
 # start nginx
@@ -56,6 +58,7 @@ $ source venv/bin/activate
 
 # install dependencies
 $ pip3 install -r requirements.txt
+$ pip3 install mysqlclient wheel uwsgi
 
 # run uWSGI application
 $ uwsgi --uid 33 --gid 33 --ini edufinder_uwsgi.ini
