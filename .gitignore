@@ -6,3 +6,4 @@ edufinder/static/admin/
 edufinder.sock
 __pycache__
 local.cfg
+db.sqlite3

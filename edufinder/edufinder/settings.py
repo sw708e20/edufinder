@@ -12,7 +12,6 @@ https://docs.djangoproject.com/en/3.1/ref/settings/
 
 import os
 
-from . import secrets
 from pathlib import Path
 from configparser import ConfigParser
 from io import StringIO
@@ -45,6 +44,7 @@ PASSWORD =
 [hostnames]
 2=127.0.0.1
 3=localhost
+4=edufinder.dk
 """
 
 cfg = ConfigParser()
@@ -56,12 +56,15 @@ cfg.read(os.path.join(BASE_DIR, "local.cfg"))
 # See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = secrets.SECRET_KEY
+SECRET_KEY = cfg.get("general", "SECRET_KEY")
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['edufinder.dk', '127.0.0.1']
+ALLOWED_HOSTS = []
+
+for e in cfg.items("hostnames"):
+    ALLOWED_HOSTS.append(e[1])
 
 
 # Application definition
