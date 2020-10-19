@@ -7,7 +7,7 @@ class Question(models.Model):
 
 
 class Education(models.Model):
-    name = models.CharField(max_length=80)
+    name = models.CharField(max_length=120)
     description = models.CharField(max_length=2000)
 
 
