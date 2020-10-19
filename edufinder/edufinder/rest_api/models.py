@@ -14,4 +14,4 @@ class Education(models.Model):
 class EducationType(models.Model):
     education = models.ForeignKey(to=Education, on_delete=models.CASCADE)
     url = models.CharField(max_length=2000)
-    name = models.CharField(max_length=80)
+    name = models.CharField(max_length=120)
