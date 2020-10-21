@@ -26,5 +26,7 @@ router.register(r'education_types', views.EducationTypeViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('question/', views.next_question),
+    path('recommend/', views.recommend),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework'))
 ]
