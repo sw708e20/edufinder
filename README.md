@@ -29,6 +29,13 @@ $ python manage.py runserver
 ```
 You should now be able to access the application at [localhost:8000](http://localhost:8000/).
 
+### Testdata
+Change directory to `/path/to/edufinder/edufinder` and run
+```shell script
+$ python manage.py migrate
+$ python manage.py loaddata edufinder/rest_api/fixtures/testdata.json
+$ python manage.py runserver
+```
 ## Production
 
 ### Prerequisites
