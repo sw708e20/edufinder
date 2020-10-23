@@ -2,8 +2,9 @@ venv/
 venv36/
 edufinder/edufinder/secrets.py
 edufinder/db.sqlite3
-edufinder/static/admin/
+edufinder/static/
 edufinder.sock
 __pycache__
 local.cfg
 db.sqlite3
+*.pyc
