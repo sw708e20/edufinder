@@ -14,6 +14,7 @@ import os
 
 from pathlib import Path
 from configparser import ConfigParser
+import json
 from io import StringIO
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -42,9 +43,16 @@ USER =
 PASSWORD =
 
 [hostnames]
-2=127.0.0.1
-3=localhost
-4=edufinder.dk
+list = [
+    "127.0.0.1",
+    "localhost"
+    ]
+
+[cors]
+list = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000"
+    ]
 """
 
 cfg = ConfigParser()
@@ -63,8 +71,8 @@ DEBUG = True
 
 ALLOWED_HOSTS = []
 
-for e in cfg.items("hostnames"):
-    ALLOWED_HOSTS.append(e[1])
+for host in json.loads(cfg.get("hostnames", "list")):
+    ALLOWED_HOSTS.append(host)
 
 
 # Application definition
@@ -113,10 +121,8 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'edufinder.wsgi.application'
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://127.0.0.1:3000",
-]
+CORS_ALLOWED_ORIGINS = []
+CORS_ALLOWED_ORIGINS.extend(json.loads(cfg.get("cors", "list")))
 
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
