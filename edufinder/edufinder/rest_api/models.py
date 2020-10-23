@@ -12,7 +12,7 @@ class Education(models.Model):
 
 
 class EducationType(models.Model):
-    education = models.ForeignKey(to=Education, on_delete=models.CASCADE)
+    education = models.ForeignKey(to=Education, related_name='education_types', on_delete=models.CASCADE)
     url = models.CharField(max_length=2000)
     name = models.CharField(max_length=120)
 
