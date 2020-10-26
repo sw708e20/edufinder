@@ -21,13 +21,15 @@ class QuestionSerializer(serializers.HyperlinkedModelSerializer):
         fields = ['id', 'question']
 
 
-class EducationSerializer(serializers.HyperlinkedModelSerializer):
-    class Meta:
-        model = Education
-        fields = ['id', 'name', 'description']
-
-
-class EducationTypeSerializer(serializers.HyperlinkedModelSerializer):
+class EducationTypeSerializer(serializers.ModelSerializer):
     class Meta:
         model = EducationType
         fields = ['id', 'education', 'url', 'name']
+
+
+class EducationSerializer(serializers.ModelSerializer):
+    education_types = EducationTypeSerializer(many=True, read_only=True)
+
+    class Meta:
+        model = Education
+        fields = ['id', 'name', 'description', 'education_types']

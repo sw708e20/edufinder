@@ -57,7 +57,7 @@ def get_education_recommendation(answers):
     """
     Returns a list of educations 
     """
-    return Education.objects.all()
+    return Education.objects.all()[:10]
 
 @api_view(['GET', 'POST'])
 def next_question(request, question_id=None):
