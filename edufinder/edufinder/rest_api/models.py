@@ -25,7 +25,8 @@ class AnswerChoice(models.TextChoices):
     DONT_KNOW = "Don't know"
 
 class UserAnswer(models.Model):
-    pass
+    datetime = models.DateTimeField(auto_now_add=True)
+    ip_addr = models.GenericIPAddressField()
 
 class Answer(models.Model):
     question = models.ForeignKey(to=Question, on_delete=models.CASCADE)
