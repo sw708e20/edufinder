@@ -60,7 +60,7 @@ def get_education_recommendation(answers):
     return Education.objects.all()[:10]
 
 @api_view(['GET', 'POST'])
-def next_question(request, question_id=None):
+def next_question(request):
     if request.method == 'GET':
         questionpk = get_firstquestion()
     else:
