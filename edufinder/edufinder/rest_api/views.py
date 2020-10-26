@@ -75,6 +75,10 @@ def next_question(request):
     if request.method == 'GET':
         questionpk = get_firstquestion()
     else:
+        Answer.objects.create(
+            question=Question.objects.get(pk=request.POST['question']), 
+            userAnswer=UserAnswer.objects.get(pk=request.POST['userAnswer']),
+            answer=request.POST['answer'])
         questionpk = get_nextquestion(request.data)
 
     question = Question.objects.get(pk=questionpk)
