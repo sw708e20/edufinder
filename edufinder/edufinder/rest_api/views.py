@@ -1,9 +1,12 @@
+import random
+
 from django.contrib.auth.models import User, Group
 from rest_framework import viewsets
 from rest_framework import permissions
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .serializers import *
+from typing import List
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -41,23 +44,31 @@ class EducationTypeViewSet(viewsets.ModelViewSet):
     serializer_class = EducationTypeSerializer
     permission_classes = [permissions.IsAuthenticated]
 
+
 def get_firstquestion():
     """
     Returns the primary key of the first question asked.
     """
     return 1
 
-def get_nextquestion(previous_answers):
+
+def get_nextquestion(previous_answers: List[dict]):
     """
     Returns the primary key of the next question.
+
+    Expected input format
+        [ { id: int, question: str, answer: int }, ... ]
     """
-    return 1
+    return random.choice(list(set([x.id for x in Question.objects.all()]) -
+                              set([x['id'] for x in previous_answers])))
+
 
 def get_education_recommendation(answers):
     """
     Returns a list of educations 
     """
     return Education.objects.all()[:10]
+
 
 @api_view(['GET', 'POST'])
 def next_question(request):
@@ -69,6 +80,7 @@ def next_question(request):
     question = Question.objects.get(pk=questionpk)
     serializer = QuestionSerializer(question)
     return Response(serializer.data)
+
 
 @api_view(['POST'])
 def recommend(request):
