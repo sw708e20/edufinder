@@ -2,9 +2,12 @@ import random
 
 from django.contrib.auth.models import User, Group
 from rest_framework import viewsets
+from rest_framework import status
 from rest_framework import permissions
 from rest_framework.decorators import api_view
+from rest_framework.decorators import parser_classes
 from rest_framework.response import Response
+from rest_framework.parsers import JSONParser
 from .serializers import *
 from typing import List
 
@@ -87,7 +90,10 @@ def next_question(request):
 
 
 @api_view(['POST'])
+@parser_classes([JSONParser])
 def recommend(request):
+    serializer = AnswerSerializer(data=request.data, many=True)
+    serializer.is_valid(raise_exception=True)
     recommendations = get_education_recommendation(request.data)
     serializer = EducationSerializer(recommendations, many=True)
     return Response(serializer.data)
