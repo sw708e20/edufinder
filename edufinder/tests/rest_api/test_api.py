@@ -34,7 +34,7 @@ class ApiTestBase(TestCase):
 
 class QuestionApiTest(ApiTestBase):
 
-    def test_POST_questions_returns_new_question(self):
+    def test_POST_questions_returns_okay(self):
         self.create_questions()
         
 
@@ -47,7 +47,6 @@ class QuestionApiTest(ApiTestBase):
         )
         
         self.assertEqual(response.status_code, 200)
-        #self.assertEqual(response.data['question'], "question #1?")
 
 
 class RecommendApiTest(ApiTestBase):
