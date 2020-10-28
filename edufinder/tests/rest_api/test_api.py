@@ -3,10 +3,12 @@ from rest_framework.reverse import reverse
 from rest_framework.test import APIRequestFactory
 from rest_framework.test import force_authenticate
 from rest_framework.test import APIClient
+from rest_framework import status
 from django.contrib.auth.models import User
 import json
 
 from edufinder.rest_api.models import Question, Answer, UserAnswer, AnswerChoice
+from edufinder.rest_api.serializers import AnswerChoiceSerializer
 
 
 class AnswersApiTest(TestCase):
@@ -16,21 +18,26 @@ class AnswersApiTest(TestCase):
         user = User.objects.create_user(is_superuser=True, username="admin", password="admin")
         self.client.login(username="admin", password="admin")
 
-    def test_POST_question_saved_correct_answer(self):
+    def test_POST_question_get_new_question(self):
         question = Question.objects.create(question="What is the answer to life, the universe and everything?")
-        userAnswer = UserAnswer.objects.create()
+        Question.objects.create(question="What is the answer to life, the universe and everything2?")
+        userAnswer = UserAnswer.objects.create(ip_addr="127.0.0.1")
+
+        body = [
+            {
+                "id": question.pk,
+                "answer": AnswerChoiceSerializer().to_representation(AnswerChoice.NO)
+            }
+        ]
 
         response = self.client.post(
             f'/question/',
-            data={'question': question.pk, 'answer': AnswerChoice.NO, 'userAnswer': userAnswer.pk},
+            data=json.dumps(body),
+            content_type="application/json"
         )
 
-        answer = Answer.objects.first()
         
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(answer.question, question)
-        self.assertEqual(answer.answer, AnswerChoice.NO)
-        self.assertEqual(userAnswer, answer.userAnswer)
 
     def test_POST_answer_saved(self):
         from datetime import datetime, timezone, timedelta
@@ -59,3 +66,19 @@ class AnswersApiTest(TestCase):
         answer2 = Answer.objects.get(userAnswer=ua, question=question2)
         self.assertIsNotNone(answer2)
         self.assertIsNotNone(answer2.userAnswer)
+    
+    def test_POST_validator_not_json(self):
+        response = self.client.post('/recommend/',
+                    data="abba",
+                    content_type="application/json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_POST_validator_bad_json(self):
+        body = {
+            "id": 1,
+            "answer": 2
+        }
+        response = self.client.post('/recommend/',
+                    data=json.dumps(body),
+                    content_type="application/json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
