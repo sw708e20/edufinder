@@ -1,5 +1,6 @@
 from django.contrib.auth.models import User, Group
 from rest_framework import serializers
+from rest_framework.serializers import ValidationError
 from .models import *
 
 
@@ -33,3 +34,32 @@ class EducationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Education
         fields = ['id', 'name', 'description', 'education_types']
+
+class AnswerChoiceSerializer(serializers.Field):
+    """
+    Choices are serialized into the integer value
+    """
+    conversion_dict = {
+        2: AnswerChoice.YES,
+        1: AnswerChoice.PROBABLY,
+        0: AnswerChoice.DONT_KNOW,
+        -1: AnswerChoice.PROBABLY_NOT,
+        -2: AnswerChoice.NO,
+    }
+
+    def to_representation(self, value):
+        for key, val in self.conversion_dict.items():
+            if val == value:
+                return key
+        raise ValueError(f'The value "{value}" cannot be converted')
+    
+    def to_internal_value(self, data):
+        if not isinstance(data, int):
+            raise ValidationError(f'Incorrect type. Expected int, but got {type(data).__name__}')
+        if not 2 >= data >= -2:
+            raise ValidationError("Value of out range. Must be between -2 and 2")
+        return self.conversion_dict[data]
+
+class AnswerSerializer(serializers.Serializer):
+    id = serializers.IntegerField(required=True)
+    answer = AnswerChoiceSerializer(required=True)

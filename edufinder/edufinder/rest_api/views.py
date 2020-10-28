@@ -2,9 +2,12 @@ import random
 
 from django.contrib.auth.models import User, Group
 from rest_framework import viewsets
+from rest_framework import status
 from rest_framework import permissions
 from rest_framework.decorators import api_view
+from rest_framework.decorators import parser_classes
 from rest_framework.response import Response
+from rest_framework.parsers import JSONParser
 from .serializers import *
 from typing import List
 import json
@@ -107,19 +110,21 @@ def parse_answer(input):
         result = AnswerChoice.NO
     return result
 
-def log_recommender_input(request):
+def log_recommender_input(request, serialized_data):
     ip = get_client_ip(request)
     answer = UserAnswer.objects.create(ip_addr=ip)
-    json_body = json.loads(request.body.decode("utf-8"))
-    for ans in json_body:
+    for ans in serialized_data:
         ques = Question.objects.get(pk=ans['id'])
         parsed_answer = parse_answer(ans['answer'])
         Answer.objects.create(question=ques, answer=parsed_answer, userAnswer=answer)
 
 
 @api_view(['POST'])
+@parser_classes([JSONParser])
 def recommend(request):
-    log_recommender_input(request)
+    serializer = AnswerSerializer(data=request.data, many=True)
+    serializer.is_valid(raise_exception=True)
+    log_recommender_input(request, serializer.data)
     recommendations = get_education_recommendation(request.data)
     serializer = EducationSerializer(recommendations, many=True)
     return Response(serializer.data)
