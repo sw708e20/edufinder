@@ -3,10 +3,12 @@ from rest_framework.reverse import reverse
 from rest_framework.test import APIRequestFactory
 from rest_framework.test import force_authenticate
 from rest_framework.test import APIClient
+from rest_framework import status
 from django.contrib.auth.models import User
-from unittest.mock import MagicMock
 import json
 
+from edufinder.rest_api.models import Question, Answer, UserAnswer, AnswerChoice
+from edufinder.rest_api.serializers import AnswerChoiceSerializer
 from edufinder.rest_api.models import Question, Answer, UserAnswer, AnswerChoice, Education, EducationType
 from edufinder.rest_api import views
 
@@ -29,14 +31,11 @@ class ApiTestBase(TestCase):
         education_types = [EducationType(education=educations[i], name=f'EducationType #{i}', url="http://example.com") for i in range(len(educations))]
         EducationType.objects.bulk_create(education_types)
 
-    
-
-
 class QuestionApiTest(ApiTestBase):
 
-    def test_POST_questions_returns_new_question(self):
+    def test_POST_questions_returns_okay(self):
         self.create_questions()
-        views.get_nextquestion = MagicMock(return_value=Question.objects.get(question="question #1?").pk)
+        
 
         response = self.client.post(
             f'/question/',
@@ -47,7 +46,7 @@ class QuestionApiTest(ApiTestBase):
         )
         
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.data['question'], "question #1?")
+        self.assertIsNotNone(response.data['question'])
 
 
 class RecommendApiTest(ApiTestBase):
@@ -55,18 +54,20 @@ class RecommendApiTest(ApiTestBase):
     def test_POST_to_recommend_returns_educations(self):
         self.create_questions()
         self.create_educations()
-        views.get_education_recommendation = MagicMock(return_value=Education.objects.filter(pk__in=[1,2,3]))
+        
         questions = Question.objects.all()
-        questions_list = [{"id": questions[i].pk, "answer": AnswerChoice.NO} for i in range(20)]
+        no_value = AnswerChoiceSerializer().to_representation(AnswerChoice.NO)
+        questions_list = [{"id": questions[i].pk, "answer": no_value} for i in range(20)]
 
         response = self.client.post(
             f'/recommend/',
-            data=json.dumps([
+            data=json.dumps(
                 questions_list,
-            ]),
+            ),
             content_type="application/json"
         )
-
+        self.assertIsNotNone(response.data)
+        self.assertTrue(isinstance(response.data, list))
         self.assertEqual(response.data[0]['id'], 1)
 
     def test_POST_answer_saved(self):
@@ -96,3 +97,19 @@ class RecommendApiTest(ApiTestBase):
         answer2 = Answer.objects.get(userAnswer=ua, question=question2)
         self.assertIsNotNone(answer2)
         self.assertIsNotNone(answer2.userAnswer)
+    
+    def test_POST_validator_not_json(self):
+        response = self.client.post('/recommend/',
+                    data="abba",
+                    content_type="application/json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_POST_validator_bad_json(self):
+        body = {
+            "id": 1,
+            "answer": 2
+        }
+        response = self.client.post('/recommend/',
+                    data=json.dumps(body),
+                    content_type="application/json")
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
