@@ -36,7 +36,7 @@ class QuestionApiTest(ApiTestBase):
 
     def test_POST_questions_returns_new_question(self):
         self.create_questions()
-        #views.get_nextquestion = MagicMock(return_value=Question.objects.get(question="question #1?").pk)
+        
 
         response = self.client.post(
             f'/question/',
@@ -55,7 +55,7 @@ class RecommendApiTest(ApiTestBase):
     def test_POST_to_recommend_returns_educations(self):
         self.create_questions()
         self.create_educations()
-        #views.get_education_recommendation = MagicMock(return_value=Education.objects.filter(pk__in=[1,2,3]))
+        
         questions = Question.objects.all()
         no_value = AnswerChoiceSerializer().to_representation(AnswerChoice.NO)
         questions_list = [{"id": questions[i].pk, "answer": no_value} for i in range(20)]
