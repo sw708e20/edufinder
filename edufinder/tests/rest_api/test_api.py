@@ -46,6 +46,7 @@ class QuestionApiTest(ApiTestBase):
         )
         
         self.assertEqual(response.status_code, 200)
+        self.assertIsNotNone(response.data['question'])
 
 
 class RecommendApiTest(ApiTestBase):
