@@ -5,7 +5,6 @@ from rest_framework.test import force_authenticate
 from rest_framework.test import APIClient
 from rest_framework import status
 from django.contrib.auth.models import User
-from unittest.mock import MagicMock
 import json
 
 from edufinder.rest_api.models import Question, Answer, UserAnswer, AnswerChoice
