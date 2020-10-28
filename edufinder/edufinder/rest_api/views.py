@@ -7,6 +7,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .serializers import *
 from typing import List
+import json
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -85,9 +86,40 @@ def next_question(request):
     serializer = QuestionSerializer(question)
     return Response(serializer.data)
 
+def get_client_ip(request):
+    x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
+    if x_forwarded_for:
+        ip = x_forwarded_for.split(',')[0]
+    else:
+        ip = request.META.get('REMOTE_ADDR')
+    return ip
+
+def parse_answer(input):
+    if input == 2:
+        result = AnswerChoice.YES
+    elif input == 1:
+        result = AnswerChoice.PROBABLY
+    elif input == 0:
+        result = AnswerChoice.DONT_KNOW
+    elif input == -1:
+        result = AnswerChoice.PROBABLY_NOT
+    elif input == -2:
+        result = AnswerChoice.NO
+    return result
+
+def log_recommender_input(request):
+    ip = get_client_ip(request)
+    answer = UserAnswer.objects.create(ip_addr=ip)
+    json_body = json.loads(request.body.decode("utf-8"))
+    for ans in json_body:
+        ques = Question.objects.get(pk=ans['id'])
+        parsed_answer = parse_answer(ans['answer'])
+        Answer.objects.create(question=ques, answer=parsed_answer, userAnswer=answer)
+
 
 @api_view(['POST'])
 def recommend(request):
+    log_recommender_input(request)
     recommendations = get_education_recommendation(request.data)
     serializer = EducationSerializer(recommendations, many=True)
     return Response(serializer.data)
