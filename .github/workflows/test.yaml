@@ -20,6 +20,6 @@ jobs:
           cd edufinder
           coverage run manage.py test tests
       - name: Coverage report
-        run: ls
-      - name: Coverage report
-        run: coverage report
+        run: |
+          cd edufinder
+          coverage report
