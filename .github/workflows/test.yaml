@@ -18,4 +18,4 @@ jobs:
       - name: Run tests
         run: |
           cd edufinder
-          python manage.py test tests
+          coverage run manage.py test tests
