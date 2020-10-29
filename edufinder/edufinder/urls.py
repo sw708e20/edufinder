@@ -28,5 +28,6 @@ urlpatterns = [
     path('', include(router.urls)),
     path('question/', views.next_question),
     path('recommend/', views.recommend),
+    path('guess/', views.guess),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework'))
 ]
