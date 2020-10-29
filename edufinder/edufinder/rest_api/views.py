@@ -123,8 +123,7 @@ def log_recommender_input(request, serialized_data):
 def recommend(request):
     serializer = AnswerSerializer(data=request.data, many=True)
     serializer.is_valid(raise_exception=True)
-    log_recommender_input(request, serializer.data)
-    recommendations = get_education_recommendation(request.data)
+    recommendations = get_education_recommendation(serializer.data)
     serializer = EducationSerializer(recommendations, many=True)
     return Response(serializer.data)
 
