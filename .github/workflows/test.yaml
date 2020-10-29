@@ -25,4 +25,6 @@ jobs:
           coverage report
       - name: Upload coverage reports to Codecov
         run: |
+          cd edufinder
+          ls
           codecov
