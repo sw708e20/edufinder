@@ -23,3 +23,7 @@ jobs:
         run: |
           cd edufinder
           coverage report
+                  make test
+      - name: Upload coverage reports to Codecov
+        run: |
+          codecov
