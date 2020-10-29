@@ -21,7 +21,6 @@ router = routers.DefaultRouter()
 router.register(r'users', views.UserViewSet)
 router.register(r'groups', views.GroupViewSet)
 router.register(r'questions', views.QuestionViewSet)
-router.register(r'educations', views.EducationViewSet)
 router.register(r'education_types', views.EducationTypeViewSet)
 
 urlpatterns = [
@@ -29,5 +28,6 @@ urlpatterns = [
     path('question/', views.next_question),
     path('recommend/', views.recommend),
     path('guess/', views.guess),
+    path('educations/', views.all_educations),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework'))
 ]
