@@ -75,16 +75,16 @@ def get_education_recommendation(answers):
     return Education.objects.all()[:10]
 
 
-def get_educations():
+def get_educations(q: str):
     """
     Returns list of all educations
     """
-    return Education.objects.all()
+    return [x for x in Education.objects.all() if q.lower() in x.name.lower()]
 
 
-@api_view(['GET'])
+@api_view(['POST'])
 def all_educations(request):
-    educations = get_educations()
+    educations = get_educations(request.data['q'])
     serializer = EducationSerializer(educations, many=True)
     return Response(serializer.data)
 
