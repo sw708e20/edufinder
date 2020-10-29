@@ -28,6 +28,6 @@ urlpatterns = [
     path('question/', views.next_question),
     path('recommend/', views.recommend),
     path('guess/', views.guess),
-    path('educations/', views.all_educations),
+    path('educations/', views.search_educations),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework'))
 ]
