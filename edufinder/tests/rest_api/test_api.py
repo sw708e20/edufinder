@@ -31,6 +31,13 @@ class ApiTestBase(TestCase):
         education_types = [EducationType(education=educations[i], name=f'EducationType #{i}', url="http://example.com") for i in range(len(educations))]
         EducationType.objects.bulk_create(education_types)
 
+    def get_answered_questions(self):
+        self.create_questions()
+        self.create_educations()
+        questions = Question.objects.all()
+        yes_value = AnswerChoiceSerializer().to_representation(AnswerChoice.YES)
+        return [{"id": questions[i].pk, "answer": yes_value} for i in range(20)]
+
 class QuestionApiTest(ApiTestBase):
 
     def test_POST_questions_returns_okay(self):
@@ -51,12 +58,7 @@ class QuestionApiTest(ApiTestBase):
 
 class RecommendApiTest(ApiTestBase):
     def test_POST_to_recommend_returns_educations(self):
-        self.create_questions()
-        self.create_educations()
-        
-        questions = Question.objects.all()
-        no_value = AnswerChoiceSerializer().to_representation(AnswerChoice.NO)
-        questions_list = [{"id": questions[i].pk, "answer": no_value} for i in range(20)]
+        questions_list = self.get_answered_questions()
 
         response = self.client.post(
             f'/recommend/',
@@ -115,11 +117,7 @@ class GuessApiTest(ApiTestBase):
         self.assertEqual(ua.ip_addr, ip_addr)
 
     def test_POST_saves_answers(self):
-        self.create_questions()
-        self.create_educations()
-        questions = Question.objects.all()
-        yes_value = AnswerChoiceSerializer().to_representation(AnswerChoice.YES)
-        questions_list = [{"id": questions[i].pk, "answer": yes_value} for i in range(20)]
+        questions_list = self.get_answered_questions()
         education = Education.objects.first()
         data = {"education": education.pk, "questions": questions_list}
         
