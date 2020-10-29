@@ -8,7 +8,7 @@ from django.contrib.auth.models import User
 import json
 
 from edufinder.rest_api.models import Question, Answer, UserAnswer, AnswerChoice
-from edufinder.rest_api.serializers import AnswerChoiceSerializer
+from edufinder.rest_api.serializers import AnswerChoiceSerializer, EducationSerializer
 from edufinder.rest_api.models import Question, Answer, UserAnswer, AnswerChoice, Education, EducationType
 from edufinder.rest_api import views
 
@@ -50,7 +50,6 @@ class QuestionApiTest(ApiTestBase):
 
 
 class RecommendApiTest(ApiTestBase):
-
     def test_POST_to_recommend_returns_educations(self):
         self.create_questions()
         self.create_educations()
@@ -113,3 +112,23 @@ class RecommendApiTest(ApiTestBase):
                     data=json.dumps(body),
                     content_type="application/json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+
+
+class GuessApiTest(ApiTestBase):
+
+    def test_POST_saves_answers(self):
+        self.create_questions()
+        self.create_educations()
+        questions = Question.objects.all()
+        yes_value = AnswerChoiceSerializer().to_representation(AnswerChoice.YES)
+        questions_list = [{"id": questions[i].pk, "answer": yes_value} for i in range(20)]
+        education = Education.objects.first()
+        data = {"education": education.pk, "questions": questions_list}
+        
+        response = self.client.post('/guess/',
+                    data=json.dumps(data),
+                    content_type="application/json")
+
+        self.assertEqual(UserAnswer.objects.all().count(), 1)
+        self.assertIn(questions_list[0]['id'], [answer.pk for answer in Answer.objects.all()])
+        self.assertEqual(UserAnswer.objects.first().education, Education.objects.first())
