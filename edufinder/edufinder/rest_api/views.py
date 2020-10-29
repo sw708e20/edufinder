@@ -8,6 +8,7 @@ from rest_framework import permissions
 from rest_framework.decorators import api_view
 from rest_framework.decorators import parser_classes
 from rest_framework.response import Response
+from rest_framework.request import Request
 from rest_framework.parsers import JSONParser
 from .serializers import *
 from typing import List
@@ -82,9 +83,9 @@ def get_educations(q: str):
     return [x for x in Education.objects.all() if q.lower() in x.name.lower()]
 
 
-@api_view(['POST'])
-def all_educations(request):
-    educations = get_educations(request.data['q'])
+@api_view(['GET'])
+def search_educations(request: Request):
+    educations = get_educations(request.GET['q'])
     serializer = EducationSerializer(educations, many=True)
     return Response(serializer.data)
 
