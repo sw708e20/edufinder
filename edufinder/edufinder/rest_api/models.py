@@ -27,6 +27,7 @@ class AnswerChoice(models.TextChoices):
 class UserAnswer(models.Model):
     datetime = models.DateTimeField(auto_now_add=True)
     ip_addr = models.GenericIPAddressField()
+    education = models.ForeignKey(to=Education, on_delete=models.CASCADE)
 
 class Answer(models.Model):
     question = models.ForeignKey(to=Question, on_delete=models.CASCADE)

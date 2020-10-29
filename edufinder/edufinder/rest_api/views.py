@@ -1,6 +1,7 @@
 import random
 
 from django.contrib.auth.models import User, Group
+from django.shortcuts import redirect
 from rest_framework import viewsets
 from rest_framework import status
 from rest_framework import permissions
@@ -108,7 +109,9 @@ def parse_answer(input):
 
 def log_recommender_input(request, serialized_data):
     ip = get_client_ip(request)
-    answer = UserAnswer.objects.create(ip_addr=ip)
+    education = Education.objects.get(pk=request.data['education'])
+
+    answer = UserAnswer.objects.create(ip_addr=ip, education=education)
     for ans in serialized_data:
         ques = Question.objects.get(pk=ans['id'])
         parsed_answer = parse_answer(ans['answer'])
@@ -124,3 +127,12 @@ def recommend(request):
     recommendations = get_education_recommendation(request.data)
     serializer = EducationSerializer(recommendations, many=True)
     return Response(serializer.data)
+
+@api_view(['POST'])
+@parser_classes([JSONParser])
+def guess(request):
+    serializer = AnswerSerializer(data=request.data["questions"], many=True)
+    serializer.is_valid(raise_exception=True)
+    log_recommender_input(request, serializer.data)
+    # TODO redirect to appropriate final page
+    return redirect("/")
