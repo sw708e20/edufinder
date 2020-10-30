@@ -1,4 +1,4 @@
-# EduFinder
+# EduFinder [![codecov](https://codecov.io/gh/sw708e20/edufinder/branch/master/graph/badge.svg?token=W83CSEVKPS)](undefined)
 
 ## Development
 ### Prerequisites
