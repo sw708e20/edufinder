@@ -102,7 +102,7 @@ class SearchEducationTest(ApiTestBase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 0)
     
-    def test_no_result(self):
+    def test_query_too_long(self):
         self.create_educations()
 
         response = self.client.get(
