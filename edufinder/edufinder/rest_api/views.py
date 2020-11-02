@@ -127,10 +127,10 @@ def parse_answer(input):
 
 def log_recommender_input(request, serialized_data):
     ip = get_client_ip(request)
-    education = Education.objects.get(pk=request.data['education'])
+    education = Education.objects.get(pk=serialized_data['education'])
 
     answer = UserAnswer.objects.create(ip_addr=ip, education=education)
-    for ans in serialized_data:
+    for ans in serialized_data['questions']:
         ques = Question.objects.get(pk=ans['id'])
         parsed_answer = parse_answer(ans['answer'])
         Answer.objects.create(question=ques, answer=parsed_answer, userAnswer=answer)
@@ -148,7 +148,7 @@ def recommend(request):
 @api_view(['POST'])
 @parser_classes([JSONParser])
 def guess(request):
-    serializer = AnswerSerializer(data=request.data["questions"], many=True)
+    serializer = GuessSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     log_recommender_input(request, serializer.data)
     # TODO redirect to appropriate final page
