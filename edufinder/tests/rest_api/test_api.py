@@ -168,6 +168,63 @@ class RecommendApiTest(ApiTestBase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
 
+    def test_POST_questions_returns_incorrect_answertype(self):
+        self.create_questions()
+        
+
+        response = self.client.post(
+            f'/recommend/',
+            data=json.dumps([
+                {"id": 1, "answer": 'no'},
+                {"id": 2, "answer": 1}]),
+            content_type="application/json"
+        )
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, [{
+            'answer': [
+                'Incorrect type. Expected int, but got str'
+            ]
+        }, {}])
+
+
+    def test_POST_questions_with_ints(self):
+        self.create_questions()
+        
+
+        response = self.client.post(
+            f'/recommend/',
+            data=json.dumps([
+                {"id": 1, "answer": -2},
+                {"id": 2, "answer": 1}]),
+            content_type="application/json"
+        )
+        
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertIsNotNone(response.data)
+        
+
+
+    def test_POST_questions_with_int_outofrange(self):
+        self.create_questions()
+        
+
+        response = self.client.post(
+            f'/recommend/',
+            data=json.dumps([
+                {"id": 1, "answer": -4},
+                {"id": 2, "answer": 1}]),
+            content_type="application/json"
+        )
+        
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, [{
+            'answer': [
+                'Value of out range. Must be between -2 and 2'
+            ]
+        }, {}])
+
+
 class GuessApiTest(ApiTestBase):
 
     def test_POST_correct_time_and_ip(self):
