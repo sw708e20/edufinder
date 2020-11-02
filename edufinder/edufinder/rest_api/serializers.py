@@ -63,3 +63,6 @@ class AnswerChoiceSerializer(serializers.Field):
 class AnswerSerializer(serializers.Serializer):
     id = serializers.IntegerField(required=True)
     answer = AnswerChoiceSerializer(required=True)
+
+class EducationSearchSerializer(serializers.Serializer):
+    q = serializers.CharField(max_length=200)

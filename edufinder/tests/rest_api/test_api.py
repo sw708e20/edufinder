@@ -38,6 +38,86 @@ class ApiTestBase(TestCase):
         yes_value = AnswerChoiceSerializer().to_representation(AnswerChoice.YES)
         return [{"id": questions[i].pk, "answer": yes_value} for i in range(20)]
 
+class SearchEducationTest(ApiTestBase):
+    def test_search_no_query(self):
+        self.create_educations()
+
+        response = self.client.get(
+            '/educations/'
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, {
+            "q": [
+                "This field is required."
+            ]
+        })
+
+    def test_search_query(self):
+        self.create_educations()
+
+        response = self.client.get(
+            '/educations/',
+            data = {
+                'q': 'Educatio'
+            }
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 10)
+    
+    def test_search_ci_query(self):
+        self.create_educations()
+
+        response = self.client.get(
+            '/educations/',
+            data = {
+                'q': 'educatio'
+            }
+        )
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 10)
+    
+    def test_ignore_additional_params(self):
+        self.create_educations()
+
+        response = self.client.get(
+            '/educations/',
+            data = {
+                'q': 'Educatio',
+                'a': 123
+            }
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 10)
+    
+    def test_no_result(self):
+        self.create_educations()
+
+        response = self.client.get(
+            '/educations/',
+            data = {
+                'q': 'no_exist'
+            }
+        )
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(len(response.data), 0)
+    
+    def test_query_too_long(self):
+        self.create_educations()
+
+        response = self.client.get(
+            '/educations/',
+            data = {
+                'q': 'b'*201
+            }
+        )
+        self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
+        self.assertEqual(response.data, {
+            "q": [
+                "Ensure this field has no more than 200 characters."
+            ]
+        })
+
 class QuestionApiTest(ApiTestBase):
 
     def test_POST_questions_returns_okay(self):
