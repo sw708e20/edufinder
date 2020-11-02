@@ -63,3 +63,8 @@ class AnswerChoiceSerializer(serializers.Field):
 class AnswerSerializer(serializers.Serializer):
     id = serializers.IntegerField(required=True)
     answer = AnswerChoiceSerializer(required=True)
+
+
+class GuessSerializer(serializers.Serializer):
+    education = serializers.IntegerField(required=True)
+    questions = serializers.ListField(allow_empty=False, child=AnswerSerializer())
