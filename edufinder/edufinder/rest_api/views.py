@@ -85,7 +85,10 @@ def get_educations(q: str):
 
 @api_view(['GET'])
 def search_educations(request: Request):
-    educations = get_educations(request.GET['q'])
+    serializer = EducationSearchSerializer(data=request.GET)
+    serializer.is_valid(raise_exception=True)
+
+    educations = get_educations(serializer.data['q'])
     serializer = EducationSerializer(educations, many=True)
     return Response(serializer.data)
 

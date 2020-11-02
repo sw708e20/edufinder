@@ -68,3 +68,7 @@ class AnswerSerializer(serializers.Serializer):
 class GuessSerializer(serializers.Serializer):
     education = serializers.IntegerField(required=True)
     questions = serializers.ListField(allow_empty=False, child=AnswerSerializer())
+
+    
+class EducationSearchSerializer(serializers.Serializer):
+    q = serializers.CharField(max_length=200)
