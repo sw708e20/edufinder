@@ -73,6 +73,9 @@ def get_education_recommendation(answers):
     """
     Returns a list of educations 
     """
+    question_ids = [a['id'] for a in answers]
+    #AnswerConsensus.objects.filter(education__in=question_ids)
+    print(question_ids)
     return Education.objects.all()[:10]
 
 
@@ -151,5 +154,5 @@ def guess(request):
     serializer = GuessSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     log_recommender_input(request, serializer.data)
-    # TODO redirect to appropriate final page
+    
     return redirect("/")
