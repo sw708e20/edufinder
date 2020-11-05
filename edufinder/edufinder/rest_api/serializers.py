@@ -19,7 +19,7 @@ class GroupSerializer(serializers.HyperlinkedModelSerializer):
 class QuestionSerializer(serializers.HyperlinkedModelSerializer):
     class Meta:
         model = Question
-        fields = ['id', 'question']
+        fields = ['id', 'en', 'da']
 
 
 class EducationTypeSerializer(serializers.ModelSerializer):
