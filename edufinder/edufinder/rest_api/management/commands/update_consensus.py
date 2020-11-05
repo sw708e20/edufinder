@@ -1,21 +1,18 @@
 from django.core.management.base import BaseCommand
 from edufinder.rest_api.models import AnswerConsensus, UserAnswer, Answer, AnswerChoice
+from edufinder.rest_api.serializers import AnswerChoiceSerializer
 
 class Command(BaseCommand):
     help = 'Updated the answer consensus'
 
+    serializer = AnswerChoiceSerializer()
+
     def handle(self, *args, **options):
         consensus = {}
-        conversion_dict = {
-            AnswerChoice.YES: 2,
-            AnswerChoice.PROBABLY: 1,
-            AnswerChoice.DONT_KNOW: 0,
-            AnswerChoice.PROBABLY_NOT: -1,
-            AnswerChoice.NO: -2,
-        }
 
         #Iterate over all answers and create a dict for each education and each question under that.
-        for answer in Answer.objects.all():
+        answers = Answer.objects.all()
+        for answer in answers:
             user_answer = answer.userAnswer
             if not consensus.get(user_answer.education.pk):
                 consensus[user_answer.education.pk] = {}
@@ -24,25 +21,21 @@ class Command(BaseCommand):
 
             if not current_education_consensus.get(answer.question.pk):
                 current_education_consensus[answer.question.pk] = {2:0, 1:0, 0:0, -1:0, -2:0}
-            
-            current_question_consensus = current_education_consensus[answer.question.pk]
 
-            int_answer = conversion_dict[answer.answer]
+            current_question_consensus = current_education_consensus[answer.question.pk]
+            int_answer = self.serializer.to_representation(answer.answer)
 
             current_question_consensus[int_answer] += 1
-        
-        print(consensus)
-        
+
+        updated_answer_consensus = []
         #Iterate over all elements and set what the answer should be.
         for education_key, education_info in consensus.items():
             for question_key, answers in education_info.items():
-                education_info[question_key] = max(answers, key=answers.get)
+                int_value = max(answers, key=answers.get)
+                consensus_answer = self.serializer.to_internal_value(int_value)
 
-        #Fetch all AnswerConsensus objects and update accordingly to the new data.
-        current_answer_consensus = AnswerConsensus.objects.all()
+                ac = AnswerConsensus.objects.filter(education__pk=education_key,question__pk=question_key).get()
+                ac.answer = consensus_answer
+                updated_answer_consensus.append(ac)
 
-        for answer_consensus in current_answer_consensus:
-            answer_consensus.answer = consensus[old_answer_consensus.education.pk][old_answer_consensus.question.pk]
-
-        
-        AnswerConsensus.objects.bulk_update(current_answer_consensus, ['answer'])
+        AnswerConsensus.objects.bulk_update(updated_answer_consensus, ['answer'])
