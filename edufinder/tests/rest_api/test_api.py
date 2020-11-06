@@ -5,6 +5,7 @@ from rest_framework.test import force_authenticate
 from rest_framework.test import APIClient
 from rest_framework import status
 from django.contrib.auth.models import User
+from django.core import management
 import json
 
 from edufinder.rest_api.models import Question, Answer, UserAnswer, AnswerChoice
@@ -138,8 +139,12 @@ class QuestionApiTest(ApiTestBase):
 
 
 class RecommendApiTest(ApiTestBase):
+    def create_answerconsensus(self):
+        management.call_command('create_consensus')
+
     def test_POST_to_recommend_returns_educations(self):
         questions_list = self.get_answered_questions()
+        self.create_answerconsensus()
 
         response = self.client.post(
             f'/recommend/',

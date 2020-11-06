@@ -66,7 +66,7 @@ def get_nextquestion(previous_answers: List[dict]):
     Returns the primary key of the next question.
 
     Expected input format
-            [ { id: int, question: str, answer: int }, ... ]
+        [ { id: int, question: str, answer: int }, ... ]
     """
     return random.choice(list(set([x.id for x in Question.objects.all()]) -
                               set([x['id'] for x in previous_answers])))
@@ -96,7 +96,7 @@ def get_education_recommendation(answers):
             str_q_id = str(question_id)
             question_sum += answer_distance(record[str_q_id], answer_dict[str_q_id])**2
         
-        data_imp[record['education']] = math.sqrt(question_sum)
+        data_imp[record['education']] = sqrt(question_sum)
 
     sorted_educations = sorted(data_imp.items(), key=lambda x: x[1])[:10]
     education_ids = [s[0] for s in sorted_educations]

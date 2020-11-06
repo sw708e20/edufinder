@@ -20,5 +20,5 @@ class Migration(migrations.Migration):
             name='en',
             field=models.CharField(default='asd', max_length=200),
             preserve_default=False,
-        ),
+        )
     ]
