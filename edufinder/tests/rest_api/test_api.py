@@ -20,7 +20,7 @@ class ApiTestBase(TestCase):
         self.client.login(username="admin", password="admin")
 
     def create_questions(self):
-        questions = [Question(question=f'question #{i}?') for i in range(30)]
+        questions = [Question(en=f'question #{i}?', da=f'question #{i}?') for i in range(30)]
         Question.objects.bulk_create(questions)
 
     def create_educations(self):
@@ -133,7 +133,8 @@ class QuestionApiTest(ApiTestBase):
         )
         
         self.assertEqual(response.status_code, 200)
-        self.assertIsNotNone(response.data['question'])
+        self.assertIsNotNone(response.data['en'])
+        self.assertIsNotNone(response.data['da'])
 
 
 class RecommendApiTest(ApiTestBase):
@@ -230,8 +231,8 @@ class GuessApiTest(ApiTestBase):
     def test_POST_correct_time_and_ip(self):
         from datetime import datetime, timezone, timedelta
         ip_addr = "127.0.0.1"
-        question1 = Question.objects.create(question="Test question")
-        question2 = Question.objects.create(question="Test question")
+        question1 = Question.objects.create(en="Test question", da="Test question")
+        question2 = Question.objects.create(en="Test question", da="Test question")
         self.create_educations()
         data = {"education": Education.objects.first().pk, "questions": 
                 [

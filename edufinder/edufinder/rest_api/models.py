@@ -3,7 +3,8 @@ from django.db import models
 
 # Create your models here.
 class Question(models.Model):
-    question = models.CharField(max_length=200)
+    en = models.CharField(max_length=200)
+    da = models.CharField(max_length=200)
 
 
 class Education(models.Model):
