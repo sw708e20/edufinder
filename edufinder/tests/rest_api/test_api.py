@@ -9,7 +9,7 @@ from django.core import management
 import json
 
 from edufinder.rest_api.models import Question, Answer, UserAnswer, AnswerChoice
-from edufinder.rest_api.serializers import AnswerChoiceSerializer, EducationSerializer
+from edufinder.rest_api.serializers import EducationSerializer
 from edufinder.rest_api.models import Question, Answer, UserAnswer, AnswerChoice, Education, EducationType
 from edufinder.rest_api import views
 
@@ -36,7 +36,7 @@ class ApiTestBase(TestCase):
         self.create_questions()
         self.create_educations()
         questions = Question.objects.all()
-        yes_value = AnswerChoiceSerializer().to_representation(AnswerChoice.YES)
+        yes_value = AnswerChoice.YES
         return [{"id": questions[i].pk, "answer": yes_value} for i in range(20)]
 
 class SearchEducationTest(ApiTestBase):
@@ -189,7 +189,7 @@ class RecommendApiTest(ApiTestBase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data, [{
             'answer': [
-                'Incorrect type. Expected int, but got str'
+                '"no" is not a valid choice.'
             ]
         }, {}])
 
@@ -226,7 +226,7 @@ class RecommendApiTest(ApiTestBase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data, [{
             'answer': [
-                'Value of out range. Must be between -2 and 2'
+                '"-4" is not a valid choice.'
             ]
         }, {}])
 
