@@ -71,12 +71,6 @@ def get_nextquestion(previous_answers: List[dict]):
     return random.choice(list(set([x.id for x in Question.objects.all()]) -
                               set([x['id'] for x in previous_answers])))
 
-def answer_distance(answer1, answer2):
-    serializer = AnswerChoiceSerializer()
-    answer1_int = serializer.to_representation(answer1)
-    answer2_int = answer2
-    return answer2_int - answer1_int
-
 def get_education_recommendation(answers):
     """
     Returns a list of educations 
@@ -94,7 +88,7 @@ def get_education_recommendation(answers):
         
         for question_id in question_ids:
             str_q_id = str(question_id)
-            question_sum += answer_distance(record[str_q_id], answer_dict[str_q_id])**2
+            question_sum +=  (answer_dict[str_q_id] - record[str_q_id])**2
         
         data_imp[record['education']] = sqrt(question_sum)
 
@@ -140,19 +134,6 @@ def get_client_ip(request):
         ip = request.META.get('REMOTE_ADDR')
     return ip
 
-def parse_answer(input):
-    if input == 2:
-        result = AnswerChoice.YES
-    elif input == 1:
-        result = AnswerChoice.PROBABLY
-    elif input == 0:
-        result = AnswerChoice.DONT_KNOW
-    elif input == -1:
-        result = AnswerChoice.PROBABLY_NOT
-    elif input == -2:
-        result = AnswerChoice.NO
-    return result
-
 def log_recommender_input(request, serialized_data):
     ip = get_client_ip(request)
     education = Education.objects.get(pk=serialized_data['education'])
@@ -160,9 +141,7 @@ def log_recommender_input(request, serialized_data):
     answer = UserAnswer.objects.create(ip_addr=ip, education=education)
     for ans in serialized_data['questions']:
         ques = Question.objects.get(pk=ans['id'])
-        parsed_answer = parse_answer(ans['answer'])
-        Answer.objects.create(question=ques, answer=parsed_answer, userAnswer=answer)
-
+        Answer.objects.create(question=ques, answer=ans['answer'], userAnswer=answer)
 
 @api_view(['POST'])
 @parser_classes([JSONParser])
