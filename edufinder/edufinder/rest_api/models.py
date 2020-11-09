@@ -37,3 +37,11 @@ class Answer(models.Model):
 
     class Meta:
         unique_together = ('question', 'userAnswer')
+
+class AnswerConsensus(models.Model):
+    education = models.ForeignKey(to=Education, on_delete=models.CASCADE)
+    question = models.ForeignKey(to=Question, on_delete=models.CASCADE)
+    answer = models.CharField(choices=AnswerChoice.choices, max_length=20)
+
+    class Meta:
+        unique_together = [['education', 'question']]
