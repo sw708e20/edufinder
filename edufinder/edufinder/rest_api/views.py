@@ -58,7 +58,8 @@ def get_firstquestion():
     """
     Returns the primary key of the first question asked.
     """
-    return 1
+    return Question.objects.order_by('-weight').first()
+
 
 
 def get_nextquestion(previous_answers: List[dict]):
@@ -68,8 +69,9 @@ def get_nextquestion(previous_answers: List[dict]):
     Expected input format
         [ { id: int, question: str, answer: int }, ... ]
     """
-    return random.choice(list(set([x.id for x in Question.objects.all()]) -
-                              set([x['id'] for x in previous_answers])))
+    used_ids = [x['id'] for x in previous_answers]
+    return Question.objects.exclude(pk__in=used_ids).order_by('-weight').first()
+
 
 def get_education_recommendation(answers):
     """
@@ -118,11 +120,10 @@ def search_educations(request: Request):
 @api_view(['GET', 'POST'])
 def next_question(request):
     if request.method == 'GET':
-        questionpk = get_firstquestion()
+        question = get_firstquestion()
     else:
-        questionpk = get_nextquestion(request.data)
+        question = get_nextquestion(request.data)
 
-    question = Question.objects.get(pk=questionpk)
     serializer = QuestionSerializer(question)
     return Response(serializer.data)
 

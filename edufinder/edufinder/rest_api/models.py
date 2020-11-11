@@ -1,10 +1,12 @@
 from django.db import models
+from django.core.validators import MaxValueValidator, MinValueValidator
 
 
 # Create your models here.
 class Question(models.Model):
     en = models.CharField(max_length=200)
     da = models.CharField(max_length=200)
+    weight = models.FloatField(validators=[MinValueValidator(0.0), MaxValueValidator(100.0)], default=0.0)
 
 
 class Education(models.Model):
