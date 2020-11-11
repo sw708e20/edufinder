@@ -69,7 +69,7 @@ def get_nextquestion(previous_answers: dict):
     Expected input format
         { id: answer, id: answer , ... }
     """
-    return random.choice(list(set([x.id for x in Question.objects.all()]) -
+    return random.choice(list(set([str(x.id) for x in Question.objects.all()]) -
                               set(previous_answers.keys())))
 
 def get_education_recommendation(answers):
