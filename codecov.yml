@@ -5,6 +5,8 @@ codecov:
     - "/home/runner/work/edufinder/edufinder/edufinder/tests/*"
     - "edufinder/tests"
     - "edufinder/tests/test_api"
+    - "edufinder/manage.py"
+    - "/home/runner/work/edufinder/edufinder/edufinder/manage.py"
 
 fixes:
   - "/home/runner/work/edufinder/edufinder/::" # Correct paths
