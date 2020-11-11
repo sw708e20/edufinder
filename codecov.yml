@@ -3,6 +3,7 @@
 codecov:
   ignore:
     - "/home/runner/work/edufinder/edufinder/edufinder/tests/*"
+    - "edufinder/tests"
 
 fixes:
   - "/home/runner/work/edufinder/edufinder/::" # Correct paths
