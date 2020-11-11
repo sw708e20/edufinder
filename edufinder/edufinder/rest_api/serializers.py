@@ -35,9 +35,23 @@ class EducationSerializer(serializers.ModelSerializer):
         model = Education
         fields = ['id', 'name', 'description', 'education_types']
 
-class AnswerSerializer(serializers.Serializer):
-    id = serializers.IntegerField(required=True)
-    answer = serializers.ChoiceField(required=True, choices=AnswerChoice)
+class AnswerSerializer(serializers.BaseSerializer):
+    def to_internal_value(self, value):
+        if type(value) is not dict:
+            raise serializers.ValidationError("Input is not a dictionary")
+
+        for k, v in value.items():
+            if type(k) is not str:
+                raise serializers.ValidationError("Key is not string")
+            if type(v) is not int:
+                raise serializers.ValidationError("Value is not int")
+
+        print(f"to_internal_value: {value}")
+        return value
+
+    def to_representation(self, instance):
+        print(f"to_representation: {instance}")
+        return instance
 
 
 class GuessSerializer(serializers.Serializer):

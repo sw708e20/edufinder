@@ -10,6 +10,7 @@ from rest_framework.decorators import parser_classes
 from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework.parsers import JSONParser
+from rest_framework.serializers import DictField
 from django_pivot.pivot import pivot
 from django.db.models import Min
 from math import sqrt
@@ -61,24 +62,22 @@ def get_firstquestion():
     return 1
 
 
-def get_nextquestion(previous_answers: List[dict]):
+def get_nextquestion(previous_answers: dict):
     """
     Returns the primary key of the next question.
 
     Expected input format
-        [ { id: int, question: str, answer: int }, ... ]
+        { id: answer, id: answer , ... }
     """
     return random.choice(list(set([x.id for x in Question.objects.all()]) -
-                              set([x['id'] for x in previous_answers])))
+                              set(previous_answers.keys())))
 
 def get_education_recommendation(answers):
     """
     Returns a list of educations 
     """
-    question_ids = [a['id'] for a in answers]
-    answer_dict = {}
-    for answer in answers:
-        answer_dict[str(answer['id'])] = answer['answer']
+    question_ids = answers.keys()
+    print(f"get_education_recommendation: {answers}")
     pivot_tab = pivot(AnswerConsensus.objects.filter(question_id__in=question_ids), 'education', 'question', 'answer', aggregation=Min)
 
     data_imp = {}
@@ -88,7 +87,7 @@ def get_education_recommendation(answers):
         
         for question_id in question_ids:
             str_q_id = str(question_id)
-            question_sum +=  (answer_dict[str_q_id] - record[str_q_id])**2
+            question_sum +=  (answers[str_q_id] - record[str_q_id])**2
         
         data_imp[record['education']] = sqrt(question_sum)
 
@@ -146,8 +145,10 @@ def log_recommender_input(request, serialized_data):
 @api_view(['POST'])
 @parser_classes([JSONParser])
 def recommend(request):
-    serializer = AnswerSerializer(data=request.data, many=True)
+    print(request.data)
+    serializer = AnswerSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
+    print(serializer.data)
     recommendations = get_education_recommendation(serializer.data)
     serializer = EducationSerializer(recommendations, many=True)
     return Response(serializer.data)
