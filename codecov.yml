@@ -2,9 +2,9 @@
 
 codecov:
   ignore:
-    - "/home/runner/work/edufinder/edufinder/edufinder/tests/*"
-    - "edufinder/tests"
-    - "edufinder/tests/test_api"
+    - "/home/runner/work/edufinder/edufinder/edufinder/tests/**/*"
+    - "edufinder/tests/**/*"
+    - "edufinder/tests/rest_api"
     - "edufinder/manage.py"
     - "/home/runner/work/edufinder/edufinder/edufinder/manage.py"
 
