@@ -1,4 +1,8 @@
 # codecov.yml
 
+codecov:
+  ignore:
+    - "edufinder/tests/*"
+
 fixes:
   - "/home/runner/work/edufinder/edufinder/::" # Correct paths
