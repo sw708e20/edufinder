@@ -8,5 +8,5 @@ codecov:
     - "edufinder/manage.py"
     - "/home/runner/work/edufinder/edufinder/edufinder/manage.py"
 
-fixes:
+  fixes:
   - "/home/runner/work/edufinder/edufinder/::" # Correct paths
