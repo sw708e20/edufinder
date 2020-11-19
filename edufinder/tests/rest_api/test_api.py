@@ -128,8 +128,8 @@ class QuestionApiTest(ApiTestBase):
         response = self.client.post(
             f'/question/',
             data=json.dumps([
-                {"id": 1, "answer": AnswerChoice.NO},
-                {"id": 2, "answer": AnswerChoice.PROBABLY}]),
+                {"question": {"id": 1, "en": "asd", "da": "dsa"}, "answer": AnswerChoice.NO},
+                {"question": {"id": 2, "en": "sdf", "da": "fds"}, "answer": AnswerChoice.PROBABLY}]),
             content_type="application/json"
         )
         
