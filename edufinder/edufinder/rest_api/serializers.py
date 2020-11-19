@@ -47,3 +47,8 @@ class GuessSerializer(serializers.Serializer):
     
 class EducationSearchSerializer(serializers.Serializer):
     q = serializers.CharField(max_length=200)
+
+
+class NextQuestionInputSerializer(serializers.Serializer):
+    question = QuestionSerializer()
+    answer = serializers.IntegerField()
