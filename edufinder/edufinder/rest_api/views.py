@@ -66,7 +66,7 @@ def get_nextquestion(previous_answers: List[Answer]):
     Returns the primary key of the next question.
 
     Expected input format
-        [ { question: { id: int, en: str, da: str }, answer: int }, ... ]
+        [ { id: int, answer: int }, ... ]
     """
     return random.choice(list(set([x.id for x in Question.objects.all()]) -
                               set([x['id'] for x in previous_answers])))
