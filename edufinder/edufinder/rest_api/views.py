@@ -61,12 +61,12 @@ def get_firstquestion():
     return 1
 
 
-def get_nextquestion(previous_answers: List[dict]):
+def get_nextquestion(previous_answers: List[Answer]):
     """
     Returns the primary key of the next question.
 
     Expected input format
-        [ { id: int, question: str, answer: int }, ... ]
+        [ { id: int, answer: int }, ... ]
     """
     return random.choice(list(set([x.id for x in Question.objects.all()]) -
                               set([x['id'] for x in previous_answers])))
@@ -120,7 +120,9 @@ def next_question(request):
     if request.method == 'GET':
         questionpk = get_firstquestion()
     else:
-        questionpk = get_nextquestion(request.data)
+        serializer = AnswerSerializer(data=request.data, many=True)
+        serializer.is_valid(raise_exception=True)
+        questionpk = get_nextquestion(serializer.data)
 
     question = Question.objects.get(pk=questionpk)
     serializer = QuestionSerializer(question)
