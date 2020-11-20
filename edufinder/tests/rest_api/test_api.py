@@ -137,6 +137,34 @@ class QuestionApiTest(ApiTestBase):
         self.assertIsNotNone(response.data['en'])
         self.assertIsNotNone(response.data['da'])
 
+    def test_POST_questions_returns_wrong_value(self):
+        self.create_questions()
+        
+
+        response = self.client.post(
+            f'/question/',
+            data=json.dumps([
+                {"id": 1, "answer": "123321"},
+                {"id": 2, "answer": "321321"}]),
+            content_type="application/json"
+        )
+        
+        self.assertEqual(response.status_code, 400)
+
+    def test_POST_questions_returns_field_required(self):
+        self.create_questions()
+        
+
+        response = self.client.post(
+            f'/question/',
+            data=json.dumps([
+                {"id": 1, "answe2r": "123321"},
+                {"id": 2, "answe2r": "321321"}]),
+            content_type="application/json"
+        )
+        
+        self.assertEqual(response.status_code, 400)
+
 
 class RecommendApiTest(ApiTestBase):
     def create_answerconsensus(self):

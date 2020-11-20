@@ -120,7 +120,8 @@ def next_question(request):
     if request.method == 'GET':
         questionpk = get_firstquestion()
     else:
-        serializer = AnswerSerializer(request.data, many=True)
+        serializer = AnswerSerializer(data=request.data, many=True)
+        serializer.is_valid(raise_exception=True)
         questionpk = get_nextquestion(serializer.data)
 
     question = Question.objects.get(pk=questionpk)
