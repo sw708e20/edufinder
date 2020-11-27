@@ -24,7 +24,7 @@ def create_branch(dataset, questions, nodeChoice = None):
     for choice in AnswerChoice:
         newDataSet = get_where(dataset, question, choice)
 
-        child = create_branch(dataSet, questions.copy(), educations, choice)
+        child = create_branch(dataSet, questions.copy(), choice)
 
         if child is not None:
             node.add_child(child)
