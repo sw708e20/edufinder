@@ -1,132 +1,100 @@
 from edufinder.rest_api.models import UserAnswer, Answer, AnswerChoice, Question, Education
-import math
+import pandas as pd
+import numpy as np
+from math import log, e
 
 
+def create_question_tree():
+    dataset = fetch_data()
+    questions = dataset.columns.tolist()[:-1]
+    return create_branch(dataset, questions)
 
 
-def CreateQuestionTree():
-    print("Fetching data")
-    userAnswers = FetchUserAnswers()
-    questions = list(Question.objects.all())
-    educations = list(Education.objects.all())
-
-
-    print("Creating tree")
-    tree = CreateBranch(userAnswers, questions, educations)
-    tree.print_tree()
-
-
-
-def CreateBranch(userAnswers, questions, educations, nodeChoice = None):
+def create_branch(dataset, questions, nodeChoice = None):
     left = len(questions)
-    dataC = len(userAnswers)
-    if left == 0 or dataC == 0:
+    dataCount = len(dataset.index)
+    if left == 0 or dataCount == 0:
         return None
 
-    print("Questions left " + str(left) + " with " +str(dataC) + " entries")
-
-    question = FindLocalBestQuestion(userAnswers, questions, educations)
+    question = find_local_best_question(dataset, questions)
 
     node = Node(question, nodeChoice)
 
     questions.remove(question)
     for choice in AnswerChoice:
-        dataSet = GetWhere(userAnswers, question, choice)
-        print(len(dataSet))
+        newDataSet = get_where(dataset, question, choice)
 
-        child = CreateBranch(dataSet, questions.copy(), educations, choice)
+        child = create_branch(dataSet, questions.copy(), educations, choice)
 
         if child is not None:
             node.add_child(child)
     return node
+
+
+def calculate_entropy(dataset, column, proportion):
+    n_classes = np.count_nonzero(proportion)
     
-#Should return all userAnswers where the question == choice
-def GetWhere(userAnswers, question, choice):
-    result = {}
-    for answer in userAnswers:
-        if question in userAnswers[answer]:
-            if userAnswers[answer][question].answer == choice:
-                result[answer] = userAnswers[answer]
-    return result
+    if n_classes <= 1:
+        return 0
 
-
-
+    ent = 0
     
+    for i in proportion:
+        ent -= i * log(i, 2)
 
-def FindLocalBestQuestion(userAnswers, questions, educations):
+    return ent
+
+
+def calculate_gain(dataset, question_id):
+    sum = 0
+    probs = get_proportion(dataset, question_id)
+    
+    for choice in AnswerChoice:
+        try:
+            sum += probs[choice]
+        except KeyError:
+            continue
+    return sum * calculate_entropy(dataset, question_id, probs)
+
+
+def get_proportion(dataset, column):
+    n_labels = len(dataset.index)
+    counts = dataset[column].value_counts()
+    probs = counts / n_labels
+    return pd.Series(probs)
+
+def fetch_data():
+    userAnswers = UserAnswer.objects.all()
+    df = pd.DataFrame()
+
+    for user in userAnswers:
+        data = {'Decision': str(user.education.pk)}
+        for answer in user.answer_set.all():
+            data[answer.question.pk] = answer.answer
+        pseries = pd.Series(data)
+        df = df.append(pseries, ignore_index=True)
+        
+    dec_column = df.pop("Decision")
+    df = df.reindex(sorted(df.columns, key=int), axis=1)
+    df.insert(len(df.columns), "Decision", dec_column)
+    return df
+
+
+def find_local_best_question(dataset, questions):
     bestQuestion = questions[0]
-    bestGain = CalculateGain(userAnswers, questions[0], educations)
-    print("first gain")
+    bestGain = calculate_gain(dataset, questions[0])
     for i in range(1, len(questions)):
-        gain = CalculateGain(userAnswers, questions[i], educations)
+        gain = calculate_gain(dataset, questions[i])
         if gain < bestGain:
             bestQuestion = questions[i]
             bestGain = gain
 
     return bestQuestion
-
-
-
-
-def CalculateEntropy(userAnswers, educations):
-    sum = 0
-    for education in educations:
-        px = ProportionIsOfClass(userAnswers, education)
-        if px == 0:
-            continue
-        else:
-            sum += -px * math.log2(px)
-    return sum
-
-def ProportionIsOfClass(userAnswers, education):
-    count = len(userAnswers)
-    inClassCount = 0
-    for answer in userAnswers.keys():
-        if answer.education == education:
-            inClassCount += 1
-
-    if count == 0:
-        return 0
-
-    return inClassCount / count
-
-def ProportionOfSubset(userAnswers, subset):
-    return len(subset) / len(userAnswers)
-
-
-
-def CalculateGain(userAnswers, question, educations):
-    sum = 0
-    T = {}
-    for choice in AnswerChoice:
-        T[choice] = {}
-
-        for userAnswer in userAnswers:
-            if question in userAnswers[userAnswer]:
-                T[choice][userAnswer] = userAnswers[userAnswer]
-
-    sum += ProportionOfSubset(userAnswers, T[choice]) * CalculateEntropy(T[choice], educations)
     
 
-    return CalculateEntropy(userAnswers, educations) - sum
+def get_where(dataset, question, choice):
+    return dataset[dataset[question] == choice]
 
-def FetchUserAnswers():
-    userAnswers = {}
-    answers = Answer.objects.all()
-
-    #Populate useranswers with data
-    for answer in answers:
-        userAnswer = answer.userAnswer
-
-        if userAnswer not in userAnswers:
-            userAnswers[userAnswer] = {}
-            userAnswers[userAnswer][answer.question] = answer
-        else:
-            userAnswers[userAnswer][answer.question] = answer
-    
-    return userAnswers
-    
-    
 
 class Node:
     "Generic tree node."
@@ -153,8 +121,3 @@ class Node:
     def add_child(self, node):
         assert isinstance(node, Node)
         self.children.append(node)
-
-
-def move (y, x):
-    print("\033[%d;%dH" % (y, x))
-
