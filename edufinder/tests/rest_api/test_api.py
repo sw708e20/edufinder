@@ -5,10 +5,11 @@ from rest_framework.test import force_authenticate
 from rest_framework.test import APIClient
 from rest_framework import status
 from django.contrib.auth.models import User
+from django.core import management
 import json
 
 from edufinder.rest_api.models import Question, Answer, UserAnswer, AnswerChoice
-from edufinder.rest_api.serializers import AnswerChoiceSerializer, EducationSerializer
+from edufinder.rest_api.serializers import EducationSerializer
 from edufinder.rest_api.models import Question, Answer, UserAnswer, AnswerChoice, Education, EducationType
 from edufinder.rest_api import views
 
@@ -20,7 +21,7 @@ class ApiTestBase(TestCase):
         self.client.login(username="admin", password="admin")
 
     def create_questions(self):
-        questions = [Question(question=f'question #{i}?') for i in range(30)]
+        questions = [Question(en=f'question #{i}?', da=f'question #{i}?') for i in range(30)]
         Question.objects.bulk_create(questions)
 
     def create_educations(self):
@@ -35,7 +36,7 @@ class ApiTestBase(TestCase):
         self.create_questions()
         self.create_educations()
         questions = Question.objects.all()
-        yes_value = AnswerChoiceSerializer().to_representation(AnswerChoice.YES)
+        yes_value = AnswerChoice.YES
         return [{"id": questions[i].pk, "answer": yes_value} for i in range(20)]
 
 class SearchEducationTest(ApiTestBase):
@@ -133,12 +134,17 @@ class QuestionApiTest(ApiTestBase):
         )
         
         self.assertEqual(response.status_code, 200)
-        self.assertIsNotNone(response.data['question'])
+        self.assertIsNotNone(response.data['en'])
+        self.assertIsNotNone(response.data['da'])
 
 
 class RecommendApiTest(ApiTestBase):
+    def create_answerconsensus(self):
+        management.call_command('create_consensus')
+
     def test_POST_to_recommend_returns_educations(self):
         questions_list = self.get_answered_questions()
+        self.create_answerconsensus()
 
         response = self.client.post(
             f'/recommend/',
@@ -183,7 +189,7 @@ class RecommendApiTest(ApiTestBase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data, [{
             'answer': [
-                'Incorrect type. Expected int, but got str'
+                '"no" is not a valid choice.'
             ]
         }, {}])
 
@@ -220,7 +226,7 @@ class RecommendApiTest(ApiTestBase):
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data, [{
             'answer': [
-                'Value of out range. Must be between -2 and 2'
+                '"-4" is not a valid choice.'
             ]
         }, {}])
 
@@ -230,8 +236,8 @@ class GuessApiTest(ApiTestBase):
     def test_POST_correct_time_and_ip(self):
         from datetime import datetime, timezone, timedelta
         ip_addr = "127.0.0.1"
-        question1 = Question.objects.create(question="Test question")
-        question2 = Question.objects.create(question="Test question")
+        question1 = Question.objects.create(en="Test question", da="Test question")
+        question2 = Question.objects.create(en="Test question", da="Test question")
         self.create_educations()
         data = {"education": Education.objects.first().pk, "questions": 
                 [

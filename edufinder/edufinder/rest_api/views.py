@@ -10,6 +10,9 @@ from rest_framework.decorators import parser_classes
 from rest_framework.response import Response
 from rest_framework.request import Request
 from rest_framework.parsers import JSONParser
+from django_pivot.pivot import pivot
+from django.db.models import Min
+from math import sqrt
 from .serializers import *
 from typing import List
 import json
@@ -68,12 +71,31 @@ def get_nextquestion(previous_answers: List[dict]):
     return random.choice(list(set([x.id for x in Question.objects.all()]) -
                               set([x['id'] for x in previous_answers])))
 
-
 def get_education_recommendation(answers):
     """
     Returns a list of educations 
     """
-    return Education.objects.all()[:10]
+    question_ids = [a['id'] for a in answers]
+    answer_dict = {}
+    for answer in answers:
+        answer_dict[str(answer['id'])] = answer['answer']
+    pivot_tab = pivot(AnswerConsensus.objects.filter(question_id__in=question_ids), 'education', 'question', 'answer', aggregation=Min)
+
+    data_imp = {}
+    
+    for record in pivot_tab:
+        question_sum = 0
+        
+        for question_id in question_ids:
+            str_q_id = str(question_id)
+            question_sum +=  (answer_dict[str_q_id] - record[str_q_id])**2
+        
+        data_imp[record['education']] = sqrt(question_sum)
+
+    sorted_educations = sorted(data_imp.items(), key=lambda x: x[1])[:10]
+    education_ids = [s[0] for s in sorted_educations]
+    
+    return Education.objects.filter(id__in=education_ids).all()[:10]
 
 
 def get_educations(q: str):
@@ -112,19 +134,6 @@ def get_client_ip(request):
         ip = request.META.get('REMOTE_ADDR')
     return ip
 
-def parse_answer(input):
-    if input == 2:
-        result = AnswerChoice.YES
-    elif input == 1:
-        result = AnswerChoice.PROBABLY
-    elif input == 0:
-        result = AnswerChoice.DONT_KNOW
-    elif input == -1:
-        result = AnswerChoice.PROBABLY_NOT
-    elif input == -2:
-        result = AnswerChoice.NO
-    return result
-
 def log_recommender_input(request, serialized_data):
     ip = get_client_ip(request)
     education = Education.objects.get(pk=serialized_data['education'])
@@ -132,9 +141,7 @@ def log_recommender_input(request, serialized_data):
     answer = UserAnswer.objects.create(ip_addr=ip, education=education)
     for ans in serialized_data['questions']:
         ques = Question.objects.get(pk=ans['id'])
-        parsed_answer = parse_answer(ans['answer'])
-        Answer.objects.create(question=ques, answer=parsed_answer, userAnswer=answer)
-
+        Answer.objects.create(question=ques, answer=ans['answer'], userAnswer=answer)
 
 @api_view(['POST'])
 @parser_classes([JSONParser])
@@ -151,5 +158,5 @@ def guess(request):
     serializer = GuessSerializer(data=request.data)
     serializer.is_valid(raise_exception=True)
     log_recommender_input(request, serializer.data)
-    # TODO redirect to appropriate final page
+    
     return redirect("/")
