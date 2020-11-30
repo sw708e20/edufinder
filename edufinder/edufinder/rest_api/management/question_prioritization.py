@@ -10,7 +10,7 @@ def create_question_tree():
     return create_branch(dataset, questions)
 
 
-def create_branch(dataset, questions, nodeChoice = None):
+def create_branch(dataset, questions):
     left = len(questions)
     dataCount = len(dataset.index)
     if left == 0 or dataCount == 0:
@@ -18,16 +18,16 @@ def create_branch(dataset, questions, nodeChoice = None):
 
     question = find_local_best_question(dataset, questions)
 
-    node = Node(question, nodeChoice)
+    node = Node(question)
 
     questions.remove(question)
     for choice in AnswerChoice:
         newDataSet = get_where(dataset, question, choice)
 
-        child = create_branch(dataSet, questions.copy(), choice)
+        child = create_branch(newDataSet, questions.copy())
 
         if child is not None:
-            node.add_child(child)
+            node.add_child(child, nodeChoice)
     return node
 
 
@@ -98,26 +98,25 @@ def get_where(dataset, question, choice):
 
 class Node:
     "Generic tree node."
-    def __init__(self, question, choice = None, children=None):
+    def __init__(self, question):
         self.question = question
-        self.children = []
-        self.choice = choice
-        if children is not None:
-            for child in children:
-                self.add_child(child)
+        self.children = dict()
     def __repr__(self):
         return self.question.question  
 
-    def print_tree(self, prefix = ""):
-        if self.choice is not None:
-            print(prefix+self.choice + " into " + self.question.question)
+    def print_tree(self, choice, prefix = ""):
+        if self.parent is not None:
+            print(f'{prefix}{choice} -- {self.question.question}')
         else:
-            print(prefix+"root" + self.question.question)
+            print(prefix + self.question.question)
 
-        if self.children is not None:
-            for child in self.children:
-                child.print_tree(prefix+"--")
+        for choice, child in self.children.items():
+            child.print_tree(choice, prefix = prefix+"--")
 
-    def add_child(self, node):
+    def set_parent(self, parent):
+        self.parent = parent
+
+    def add_child(self, node, choice):
         assert isinstance(node, Node)
-        self.children.append(node)
+        self.children[choice] = node
+        node.parent = self
