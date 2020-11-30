@@ -1,5 +1,6 @@
 from django.core.management.base import BaseCommand
 from edufinder.rest_api.models import AnswerConsensus, UserAnswer, Answer, AnswerChoice
+from edufinder.rest_api.models import Education, Question
 from edufinder.rest_api.serializers import AnswerChoiceSerializer
 
 
@@ -39,5 +40,10 @@ class Command(BaseCommand):
             consensus[edu_pk][q_pk][self.serializer.to_representation(answer.answer)] += 1
         return consensus
 
-    def ensure_consensus_exists(self):
-        AnswerConsensus.objects.bulk_create([AnswerConsensus(question=question, education=education, answer=AnswerChoice.DONT_KNOW) for education in Education.objects.all() for question in Question.objects.all() if not AnswerConsensus.objects.filter(education=education, question=question).exists()])
+    @staticmethod
+    def ensure_consensus_exists():
+        AnswerConsensus.objects.bulk_create([
+            AnswerConsensus(question=question, education=education, answer=AnswerChoice.DONT_KNOW)
+            for education in Education.objects.all()
+            for question in Question.objects.all()
+            if not AnswerConsensus.objects.filter(education=education, question=question).exists()])
