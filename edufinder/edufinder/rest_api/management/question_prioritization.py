@@ -27,7 +27,7 @@ def create_branch(dataset, questions):
         child = create_branch(newDataSet, questions.copy())
 
         if child is not None:
-            node.add_child(child, nodeChoice)
+            node.add_child(child, choice)
     return node
 
 
