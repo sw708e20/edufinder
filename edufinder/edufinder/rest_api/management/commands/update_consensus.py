@@ -9,6 +9,7 @@ class Command(BaseCommand):
     serializer = AnswerChoiceSerializer()
 
     def handle(self, *args, **options):
+        self.ensure_consensus_exists()
         consensus = self._create_consensus_dict()
         updated_answer_consensus = []
 
@@ -37,3 +38,6 @@ class Command(BaseCommand):
 
             consensus[edu_pk][q_pk][self.serializer.to_representation(answer.answer)] += 1
         return consensus
+
+    def ensure_consensus_exists(self):
+        AnswerConsensus.objects.bulk_create([AnswerConsensus(question=question, education=education, answer=AnswerChoice.DONT_KNOW) for education in Education.objects.all() for question in Question.objects.all() if not AnswerConsensus.objects.filter(education=education, question=question).exists()])
