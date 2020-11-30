@@ -1,35 +1,34 @@
+import json
+
 from django.test import TestCase
-from rest_framework.reverse import reverse
-from rest_framework.test import APIRequestFactory
-from rest_framework.test import force_authenticate
 from rest_framework.test import APIClient
 from rest_framework import status
 from django.contrib.auth.models import User
 from django.core import management
-import json
-
-from edufinder.rest_api.models import Question, Answer, UserAnswer, AnswerChoice
-from edufinder.rest_api.serializers import EducationSerializer
 from edufinder.rest_api.models import Question, Answer, UserAnswer, AnswerChoice, Education, EducationType
-from edufinder.rest_api import views
+
 
 class ApiTestBase(TestCase):
 
     def setUp(self):
         self.client = APIClient()
         user = User.objects.create_user(is_superuser=True, username="admin", password="admin")
-        self.client.login(username="admin", password="admin")
+        self.client.login(username=user.username, password=user.password)
 
-    def create_questions(self):
+    @staticmethod
+    def create_questions():
         questions = [Question(en=f'question #{i}?', da=f'question #{i}?') for i in range(30)]
         Question.objects.bulk_create(questions)
 
-    def create_educations(self):
-        educations = [Education(name = f'Education #{i}', description="description") for i in range(10)]
+    @staticmethod
+    def create_educations():
+        educations = [Education(name=f'Education #{i}', description="description")
+                      for i in range(10)]
         Education.objects.bulk_create(educations)
 
         educations = Education.objects.all()
-        education_types = [EducationType(education=educations[i], name=f'EducationType #{i}', url="http://example.com") for i in range(len(educations))]
+        education_types = [EducationType(education=educations[i], name=f'EducationType #{i}',
+                                         url="http://example.com") for i in range(len(educations))]
         EducationType.objects.bulk_create(education_types)
 
     def get_answered_questions(self):
@@ -38,6 +37,7 @@ class ApiTestBase(TestCase):
         questions = Question.objects.all()
         yes_value = AnswerChoice.YES
         return [{"id": questions[i].pk, "answer": yes_value} for i in range(20)]
+
 
 class SearchEducationTest(ApiTestBase):
     def test_search_no_query(self):
@@ -58,7 +58,7 @@ class SearchEducationTest(ApiTestBase):
 
         response = self.client.get(
             '/educations/',
-            data = {
+            data={
                 'q': 'Educatio'
             }
         )
@@ -70,7 +70,7 @@ class SearchEducationTest(ApiTestBase):
 
         response = self.client.get(
             '/educations/',
-            data = {
+            data={
                 'q': 'educatio'
             }
         )
@@ -83,7 +83,7 @@ class SearchEducationTest(ApiTestBase):
 
         response = self.client.get(
             '/educations/',
-            data = {
+            data={
                 'q': 'Educatio',
                 'a': 123
             }
@@ -96,7 +96,7 @@ class SearchEducationTest(ApiTestBase):
 
         response = self.client.get(
             '/educations/',
-            data = {
+            data={
                 'q': 'no_exist'
             }
         )
@@ -108,7 +108,7 @@ class SearchEducationTest(ApiTestBase):
 
         response = self.client.get(
             '/educations/',
-            data = {
+            data={
                 'q': 'b'*201
             }
         )
@@ -119,11 +119,11 @@ class SearchEducationTest(ApiTestBase):
             ]
         })
 
+
 class QuestionApiTest(ApiTestBase):
 
     def test_POST_questions_returns_okay(self):
         self.create_questions()
-        
 
         response = self.client.post(
             f'/question/',
@@ -139,7 +139,6 @@ class QuestionApiTest(ApiTestBase):
 
     def test_POST_questions_returns_wrong_value(self):
         self.create_questions()
-        
 
         response = self.client.post(
             f'/question/',
@@ -153,7 +152,6 @@ class QuestionApiTest(ApiTestBase):
 
     def test_POST_questions_returns_field_required(self):
         self.create_questions()
-        
 
         response = self.client.post(
             f'/question/',
@@ -167,7 +165,8 @@ class QuestionApiTest(ApiTestBase):
 
 
 class RecommendApiTest(ApiTestBase):
-    def create_answerconsensus(self):
+    @staticmethod
+    def create_answerconsensus():
         management.call_command('create_consensus')
 
     def test_POST_to_recommend_returns_educations(self):
@@ -186,9 +185,7 @@ class RecommendApiTest(ApiTestBase):
         self.assertEqual(response.data[0]['id'], 1)
     
     def test_POST_validator_not_json(self):
-        response = self.client.post('/recommend/',
-                    data="abba",
-                    content_type="application/json")
+        response = self.client.post('/recommend/', data="abba", content_type="application/json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_POST_validator_bad_json(self):
@@ -196,15 +193,12 @@ class RecommendApiTest(ApiTestBase):
             "id": 1,
             "answer": 2
         }
-        response = self.client.post('/recommend/',
-                    data=json.dumps(body),
-                    content_type="application/json")
+        response = self.client.post('/recommend/', data=json.dumps(body),
+                                    content_type="application/json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
 
     def test_POST_questions_returns_incorrect_answertype(self):
         self.create_questions()
-        
 
         response = self.client.post(
             f'/recommend/',
@@ -221,10 +215,8 @@ class RecommendApiTest(ApiTestBase):
             ]
         }, {}])
 
-
     def test_POST_questions_with_ints(self):
         self.create_questions()
-        
 
         response = self.client.post(
             f'/recommend/',
@@ -236,12 +228,9 @@ class RecommendApiTest(ApiTestBase):
         
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIsNotNone(response.data)
-        
-
 
     def test_POST_questions_with_int_outofrange(self):
         self.create_questions()
-        
 
         response = self.client.post(
             f'/recommend/',
@@ -272,11 +261,8 @@ class GuessApiTest(ApiTestBase):
                     {"id": question1.pk, "answer": 2}, 
                     {"id": question2.pk, "answer": -2}]}
 
-        response = self.client.post('/guess/',
-            data=json.dumps(data),
-            content_type="application/json",
-            REMOTE_ADDR=ip_addr,
-        )
+        response = self.client.post('/guess/', data=json.dumps(data),
+                                    content_type="application/json", REMOTE_ADDR=ip_addr)
         
         ua = UserAnswer.objects.first()
 
@@ -292,10 +278,10 @@ class GuessApiTest(ApiTestBase):
         education = Education.objects.first()
         data = {"education": education.pk, "questions": questions_list}
         
-        response = self.client.post('/guess/',
-                    data=json.dumps(data),
-                    content_type="application/json")
+        response = self.client.post('/guess/', data=json.dumps(data),
+                                    content_type="application/json")
 
         self.assertEqual(UserAnswer.objects.all().count(), 1)
-        self.assertListEqual([question['id'] for question in questions_list], [answer.pk for answer in Answer.objects.all()])
+        self.assertListEqual([question['id'] for question in questions_list],
+                             [answer.pk for answer in Answer.objects.all()])
         self.assertEqual(UserAnswer.objects.first().education, Education.objects.first())

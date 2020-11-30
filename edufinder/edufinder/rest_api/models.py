@@ -25,10 +25,12 @@ class AnswerChoice(models.IntegerChoices):
     PROBABLY_NOT = -1
     DONT_KNOW = 0
 
+
 class UserAnswer(models.Model):
     datetime = models.DateTimeField(auto_now_add=True)
     ip_addr = models.GenericIPAddressField()
     education = models.ForeignKey(to=Education, on_delete=models.CASCADE)
+
 
 class Answer(models.Model):
     question = models.ForeignKey(to=Question, on_delete=models.CASCADE)
@@ -37,6 +39,7 @@ class Answer(models.Model):
 
     class Meta:
         unique_together = ('question', 'userAnswer')
+
 
 class AnswerConsensus(models.Model):
     education = models.ForeignKey(to=Education, on_delete=models.CASCADE)

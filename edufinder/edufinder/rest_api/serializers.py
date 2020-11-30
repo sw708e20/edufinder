@@ -1,6 +1,5 @@
 from django.contrib.auth.models import User, Group
 from rest_framework import serializers
-from rest_framework.serializers import ValidationError
 from .models import *
 
 
@@ -34,6 +33,7 @@ class EducationSerializer(serializers.ModelSerializer):
     class Meta:
         model = Education
         fields = ['id', 'name', 'description', 'education_types']
+
 
 class AnswerSerializer(serializers.Serializer):
     id = serializers.IntegerField(required=True)
