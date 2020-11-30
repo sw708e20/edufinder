@@ -1,13 +1,13 @@
 from django.core.management.base import BaseCommand
 from edufinder.rest_api.models import AnswerConsensus, UserAnswer, Answer, AnswerChoice
 from edufinder.rest_api.models import Education, Question
-from edufinder.rest_api.serializers import AnswerChoiceSerializer
+from rest_framework import serializers
 
 
 class Command(BaseCommand):
     help = 'Updated the answer consensus'
 
-    serializer = AnswerChoiceSerializer()
+    serializer = serializers.ChoiceField(required=True, choices=AnswerChoice)
 
     def handle(self, *args, **options):
         self.ensure_consensus_exists()

@@ -167,7 +167,7 @@ class QuestionApiTest(ApiTestBase):
 class RecommendApiTest(ApiTestBase):
     @staticmethod
     def create_answerconsensus():
-        management.call_command('create_consensus')
+        management.call_command('update_consensus')
 
     def test_POST_to_recommend_returns_educations(self):
         questions_list = self.get_answered_questions()
