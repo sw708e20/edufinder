@@ -15,6 +15,7 @@ from django.db.models import Min
 from math import sqrt
 from .serializers import *
 from typing import List
+from .management.question_prioritization import Node, get_question_tree
 import json
 
 
@@ -61,6 +62,10 @@ def get_firstquestion():
     return 1
 
 
+def get_random_question(previous_answers):
+    return random.choice(list(set([x.id for x in Question.objects.all()]) -
+                            set([x['id'] for x in previous_answers])))
+
 def get_nextquestion(previous_answers: List[dict]):
     """
     Returns the primary key of the next question.
@@ -68,8 +73,14 @@ def get_nextquestion(previous_answers: List[dict]):
     Expected input format
         [ { id: int, question: str, answer: int }, ... ]
     """
-    return random.choice(list(set([x.id for x in Question.objects.all()]) -
-                              set([x['id'] for x in previous_answers])))
+
+    current_node = get_question_tree()
+    for answer in previous_answers:
+        if current_node is None:
+            return get_random_question(previous_answers)
+        current_node = current_node.children.get(answer['id'])
+
+    return Question.objects.get(pk = current_node)
 
 def get_education_recommendation(answers):
     """

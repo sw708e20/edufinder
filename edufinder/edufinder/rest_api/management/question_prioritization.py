@@ -3,12 +3,14 @@ import pandas as pd
 import numpy as np
 from math import log, e
 
+tree = None
 
-def create_question_tree():
-    dataset = fetch_data()
-    questions = dataset.columns.tolist()[:-1]
-    return create_branch(dataset, questions)
-
+def get_question_tree():
+    if tree is None:
+        dataset = fetch_data()
+        questions = dataset.columns.tolist()[:-1]
+        tree = create_branch(dataset, questions)
+    return tree
 
 def create_branch(dataset, questions):
     left = len(questions)
@@ -27,7 +29,7 @@ def create_branch(dataset, questions):
         child = create_branch(newDataSet, questions.copy())
 
         if child is not None:
-            node.add_child(child, nodeChoice)
+            node.add_child(child, choice)
     return node
 
 
