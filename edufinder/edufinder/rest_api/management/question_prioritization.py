@@ -8,6 +8,8 @@ tree = None
 def get_question_tree():
     if tree is None:
         dataset = fetch_data()
+        if dataset is None:
+            return
         questions = dataset.columns.tolist()[:-1]
         tree = create_branch(dataset, questions)
     return tree
@@ -67,6 +69,10 @@ def get_proportion(dataset, column):
 
 def fetch_data():
     userAnswers = UserAnswer.objects.all()
+
+    if not userAnswers:
+        return
+
     df = pd.DataFrame()
 
     for user in userAnswers:

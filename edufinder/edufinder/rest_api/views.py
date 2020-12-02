@@ -75,6 +75,10 @@ def get_nextquestion(previous_answers: List[dict]):
     """
 
     current_node = get_question_tree()
+
+    if current_node is None:
+        return get_random_question(previous_answers)
+
     for answer in previous_answers:
         if current_node is None:
             return get_random_question(previous_answers)
