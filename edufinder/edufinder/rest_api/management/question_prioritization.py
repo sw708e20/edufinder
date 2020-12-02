@@ -2,10 +2,11 @@ from edufinder.rest_api.models import UserAnswer, Answer, AnswerChoice, Question
 import pandas as pd
 import numpy as np
 from math import log, e
-
-tree = None
+from django.core.cache import cache
 
 def get_question_tree():
+    tree = cache.get('tree')
+
     if tree is None:
         dataset = fetch_data()
         if dataset is None:
