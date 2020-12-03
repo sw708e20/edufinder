@@ -30,5 +30,5 @@ class QuestionPrioritizationTest(TestCase):
         gainA = calculate_gain(self.dataset, 'A', dataset_entropy)
         gainB = calculate_gain(self.dataset, 'B', dataset_entropy)
         
-        self.assertEqual(round(gainA, 3), 1.379)
-        self.assertEqual(round(gainB, 3), 1.664)
+        self.assertEqual(round(gainA, 3), 0.877)
+        self.assertEqual(round(gainB, 3), 0.985)
