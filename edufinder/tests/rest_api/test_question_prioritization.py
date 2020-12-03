@@ -25,9 +25,10 @@ class QuestionPrioritizationTest(TestCase):
         self.assertEqual(round(ent, 2), 1.44)
 
     def test_calculate_gain(self):
+        dataset_entropy = calculate_entropy(self.dataset, "Decision", get_proportion(self.dataset, "Decision"))
 
-        gainA = calculate_gain(self.dataset, 'A')
-        gainB = calculate_gain(self.dataset, 'B')
+        gainA = calculate_gain(self.dataset, 'A', dataset_entropy)
+        gainB = calculate_gain(self.dataset, 'B', dataset_entropy)
 
         # print(f'A: {gainA}, B: {gainB}')
 

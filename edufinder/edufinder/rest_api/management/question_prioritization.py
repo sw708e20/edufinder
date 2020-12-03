@@ -50,16 +50,10 @@ def calculate_entropy(dataset, column, proportion):
     return ent
 
 
-def calculate_gain(dataset, question_id):
-    sum = 0
+def calculate_gain(dataset, question_id, dataset_entropy):
     probs = get_proportion(dataset, question_id)
     
-    for choice in AnswerChoice:
-        try:
-            sum += probs[choice]
-        except KeyError:
-            continue
-    return sum * calculate_entropy(dataset, question_id, probs)
+    return  dataset_entropy - probs.sum() * calculate_entropy(dataset, question_id, probs)
 
 
 def get_proportion(dataset, column):
@@ -90,10 +84,12 @@ def fetch_data():
 
 
 def find_local_best_question(dataset, questions):
+    dataset_entropy = calculate_entropy(dataset, "Decision", get_proportion(dataset, "Decision"))
+
     bestQuestion = questions[0]
-    bestGain = calculate_gain(dataset, questions[0])
+    bestGain = calculate_gain(dataset, questions[0], dataset_entropy)
     for i in range(1, len(questions)):
-        gain = calculate_gain(dataset, questions[i])
+        gain = calculate_gain(dataset, questions[i], dataset_entropy)
         if gain < bestGain:
             bestQuestion = questions[i]
             bestGain = gain
