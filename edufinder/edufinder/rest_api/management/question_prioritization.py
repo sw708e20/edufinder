@@ -13,6 +13,7 @@ def get_question_tree():
             return
         questions = dataset.columns.tolist()[:-1]
         tree = create_branch(dataset, questions)
+        cache.set('tree', tree)
     return tree
 
 def create_branch(dataset, questions):
@@ -54,7 +55,7 @@ def calculate_entropy(dataset):
 def calculate_gain(dataset, question_id, dataset_entropy):
     sum = 0
     probs = get_proportion(dataset, question_id)
-    
+
     for choice in AnswerChoice:
         try:
             sum += probs[choice] * calculate_entropy(dataset[dataset[question_id] == choice])
