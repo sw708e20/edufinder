@@ -1,4 +1,3 @@
-from django.test import TestCase
 from rest_framework.reverse import reverse
 from rest_framework.test import APIRequestFactory
 from rest_framework.test import force_authenticate
@@ -8,36 +7,18 @@ from django.contrib.auth.models import User
 from django.core import management
 import json
 
+from .test_base import TestBase
 from edufinder.rest_api.models import Question, Answer, UserAnswer, AnswerChoice
 from edufinder.rest_api.serializers import EducationSerializer
 from edufinder.rest_api.models import Question, Answer, UserAnswer, AnswerChoice, Education, EducationType
 from edufinder.rest_api import views
 
-class ApiTestBase(TestCase):
+class ApiTestBase(TestBase):
 
     def setUp(self):
         self.client = APIClient()
         user = User.objects.create_user(is_superuser=True, username="admin", password="admin")
         self.client.login(username="admin", password="admin")
-
-    def create_questions(self):
-        questions = [Question(en=f'question #{i}?', da=f'question #{i}?') for i in range(30)]
-        Question.objects.bulk_create(questions)
-
-    def create_educations(self):
-        educations = [Education(name = f'Education #{i}', description="description") for i in range(10)]
-        Education.objects.bulk_create(educations)
-
-        educations = Education.objects.all()
-        education_types = [EducationType(education=educations[i], name=f'EducationType #{i}', url="http://example.com") for i in range(len(educations))]
-        EducationType.objects.bulk_create(education_types)
-
-    def get_answered_questions(self):
-        self.create_questions()
-        self.create_educations()
-        questions = Question.objects.all()
-        yes_value = AnswerChoice.YES
-        return [{"id": questions[i].pk, "answer": yes_value} for i in range(20)]
 
 class SearchEducationTest(ApiTestBase):
     def test_search_no_query(self):
