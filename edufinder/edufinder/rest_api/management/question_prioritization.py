@@ -36,9 +36,10 @@ def create_branch(dataset, questions):
     return node
 
 
-def calculate_entropy(dataset, column, proportion):
+def calculate_entropy(dataset):
+    proportion = get_proportion(dataset, 'Decision')
+
     n_classes = np.count_nonzero(proportion)
-    
     if n_classes <= 1:
         return 0
 
@@ -51,9 +52,16 @@ def calculate_entropy(dataset, column, proportion):
 
 
 def calculate_gain(dataset, question_id, dataset_entropy):
+    sum = 0
     probs = get_proportion(dataset, question_id)
     
-    return  dataset_entropy - probs.sum() * calculate_entropy(dataset, question_id, probs)
+    for choice in AnswerChoice:
+        try:
+            sum += probs[choice] * calculate_entropy(dataset[dataset[question_id] == choice])
+        except KeyError:
+            continue
+    
+    return  dataset_entropy - sum
 
 
 def get_proportion(dataset, column):
@@ -84,7 +92,7 @@ def fetch_data():
 
 
 def find_local_best_question(dataset, questions):
-    dataset_entropy = calculate_entropy(dataset, "Decision", get_proportion(dataset, "Decision"))
+    dataset_entropy = calculate_entropy(dataset)
 
     bestQuestion = questions[0]
     bestGain = calculate_gain(dataset, questions[0], dataset_entropy)
