@@ -5,5 +5,5 @@ class Command(BaseCommand):
     help = 'Creates a decision tree to be used for question prioritization'
 
     def handle(self, *args, **options):
-        get_question_tree()
+        create_question_tree()
         

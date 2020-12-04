@@ -8,13 +8,17 @@ def get_question_tree():
     tree = cache.get('tree')
 
     if tree is None:
-        dataset = fetch_data()
-        if dataset is None:
-            return
-        questions = dataset.columns.tolist()[:-1]
-        tree = create_branch(dataset, questions)
-        cache.set('tree', tree)
+        return create_question_tree()
 
+    return tree
+
+def create_question_tree():
+    dataset = fetch_data()
+    if dataset is None:
+        return
+    questions = dataset.columns.tolist()[:-1]
+    tree = create_branch(dataset, questions)
+    cache.set('tree', tree)
     return tree
 
 def create_branch(dataset, questions):
