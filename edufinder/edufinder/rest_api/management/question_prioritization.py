@@ -5,12 +5,7 @@ from math import log, e
 from django.core.cache import cache
 
 def get_question_tree():
-    tree = cache.get('question_tree')
-
-    if tree is None:
-        return create_question_tree()
-
-    return tree
+    return cache.get('question_tree') or create_question_tree()
 
 def create_question_tree():
     dataset = fetch_data()
@@ -37,7 +32,7 @@ def create_branch(dataset, questions):
 
         child = create_branch(new_data_set, questions.copy())
 
-        if child is not None:
+        if child:
             node.add_child(child, choice)
     return node
 
@@ -123,7 +118,7 @@ class Node:
         self.parent = None
 
     def print_tree(self, choice = "", prefix = ""):
-        if self.parent is not None:
+        if self.parent:
             print(f'{prefix}{choice} -- {self.question}')
         else:
             print(f'{prefix} {self.question}')
@@ -132,6 +127,5 @@ class Node:
             child.print_tree(choice = choice, prefix = prefix+"--")
 
     def add_child(self, node, choice):
-        assert isinstance(node, Node)
         self.children[choice] = node
         node.parent = self
