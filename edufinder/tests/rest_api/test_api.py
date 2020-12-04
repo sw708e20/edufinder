@@ -5,7 +5,7 @@ from rest_framework.test import APIClient
 from rest_framework import status
 from django.contrib.auth.models import User
 from django.core import management
-from edufinder.rest_api.models import Question, Answer, UserAnswer, AnswerChoice, Education, EducationType
+from edufinder.rest_api.models import Question, Answer, UserAnswer, AnswerChoice, Education, EducationType, AnswerConsensus
 
 
 class ApiTestBase(TestCase):
@@ -165,13 +165,47 @@ class QuestionApiTest(ApiTestBase):
 
 
 class RecommendApiTest(ApiTestBase):
-    @staticmethod
-    def create_answerconsensus():
+
+    def setUp(self):
+        self.education_name = 'Test education'
+        self.get_answered_questions()
+        self.education = Education.objects.create(name=self.education_name, description='description')
+        self.user_answer = UserAnswer.objects.create(education=self.education, ip_addr='127.0.0.1')
+
+        Answer.objects.bulk_create([Answer(question=qst, answer=AnswerChoice.NO, userAnswer=self.user_answer) for qst in Question.objects.all()])
         management.call_command('update_consensus')
+
+    @staticmethod
+    def search_recommend_list(list, name):
+        for i in list:
+            if i['name'] == name:
+                return i
+        return None
+
+    def test_recommender_match(self):
+        response = self.client.post(
+            f'/recommend/',
+            data=json.dumps(
+                [{"id": q.id, "answer":AnswerChoice.NO} for q in Question.objects.all()],
+            ),
+            content_type="application/json"
+        )
+        self.assertIsNotNone(self.search_recommend_list(response.data, self.education.name))
+
+    def test_recommender_no_match(self):
+        response = self.client.post(
+            f'/recommend/',
+            data=json.dumps(
+                [{"id": q.id, "answer":AnswerChoice.DONT_KNOW} for q in Question.objects.all()],
+            ),
+            content_type="application/json"
+        )
+        self.assertIsNone(self.search_recommend_list(response.data, self.education.name))
+
 
     def test_POST_to_recommend_returns_educations(self):
         questions_list = self.get_answered_questions()
-        self.create_answerconsensus()
+        management.call_command('update_consensus')
 
         response = self.client.post(
             f'/recommend/',
@@ -182,9 +216,9 @@ class RecommendApiTest(ApiTestBase):
         )
         self.assertIsNotNone(response.data)
         self.assertTrue(isinstance(response.data, list))
-        self.assertEqual(response.data[0]['id'], 1)
+        self.assertIsNotNone(response.data[0].get('id'))
     
-    def test_POST_validator_not_json(self):
+    def test_POST_validator_no_json(self):
         response = self.client.post('/recommend/', data="abba", content_type="application/json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
