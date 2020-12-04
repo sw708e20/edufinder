@@ -127,9 +127,6 @@ class Node:
         for choice, child in self.children.items():
             child.print_tree(choice = choice, prefix = prefix+"--")
 
-    def set_parent(self, parent):
-        self.parent = parent
-
     def add_child(self, node, choice):
         assert isinstance(node, Node)
         self.children[choice] = node
