@@ -5,7 +5,7 @@ from math import log, e
 from django.core.cache import cache
 
 def get_question_tree():
-    tree = cache.get('tree')
+    tree = cache.get('question_tree')
 
     if tree is None:
         return create_question_tree()
@@ -18,7 +18,7 @@ def create_question_tree():
         return
     questions = dataset.columns.tolist()[:-1]
     tree = create_branch(dataset, questions)
-    cache.set('tree', tree)
+    cache.set('question_tree', tree)
     return tree
 
 def create_branch(dataset, questions):

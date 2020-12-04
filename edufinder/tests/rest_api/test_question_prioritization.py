@@ -39,6 +39,6 @@ class QuestionPrioritizationTest(TestBase):
         self.create_user_answer()
 
         get_question_tree()
-        tree = cache.get('tree')
+        tree = cache.get('question_tree')
 
         self.assertIsNotNone(tree)
