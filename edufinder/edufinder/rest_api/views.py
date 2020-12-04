@@ -83,10 +83,11 @@ def get_education_recommendation(answers):
             sqrt(sum((answer_dict[str(_id)] - record[str(_id)])**2 for _id in question_ids))
         for record in pivot_tab}
 
-    sorted_educations = sorted(data_imp.items(), key=lambda x: x[1])[:10]
-    education_ids = [s[0] for s in sorted_educations]
-    
-    return Education.objects.filter(id__in=education_ids).all()[:10]
+    sorted_educations = {x[0]: x[1] for x in sorted(data_imp.items(), key=lambda x: x[1])[:10]}
+
+    educations = Education.objects.filter(id__in=sorted_educations.keys()).all()[:10]
+
+    return sorted(educations, key=lambda x: sorted_educations[x.id])
 
 
 def get_educations(q: str):
