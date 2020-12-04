@@ -19,8 +19,8 @@ def get_question_tree():
 
 def create_branch(dataset, questions):
     left = len(questions)
-    dataCount = len(dataset.index)
-    if left == 0 or dataCount == 0:
+    data_count = len(dataset.index)
+    if left == 0 or data_count == 0:
         return None
 
     question = find_local_best_question(dataset, questions)
@@ -29,9 +29,9 @@ def create_branch(dataset, questions):
 
     questions.remove(question)
     for choice in AnswerChoice:
-        newDataSet = get_where(dataset, question, choice)
+        new_data_set = get_where(dataset, question, choice)
 
-        child = create_branch(newDataSet, questions.copy())
+        child = create_branch(new_data_set, questions.copy())
 
         if child is not None:
             node.add_child(child, choice)
@@ -73,14 +73,14 @@ def get_proportion(dataset, column):
     return pd.Series(probs)
 
 def fetch_data():
-    userAnswers = UserAnswer.objects.all()
+    user_answers = UserAnswer.objects.all()
 
-    if not userAnswers:
+    if not user_answers:
         return
 
     df = pd.DataFrame()
 
-    for user in userAnswers:
+    for user in user_answers:
         data = {'Decision': str(user.education.pk)}
         for answer in user.answer_set.all():
             data[answer.question.pk] = answer.answer
@@ -96,15 +96,15 @@ def fetch_data():
 def find_local_best_question(dataset, questions):
     dataset_entropy = calculate_entropy(dataset)
 
-    bestQuestion = questions[0]
-    bestGain = calculate_gain(dataset, questions[0], dataset_entropy)
+    best_question = questions[0]
+    best_gain = calculate_gain(dataset, questions[0], dataset_entropy)
     for i in range(1, len(questions)):
         gain = calculate_gain(dataset, questions[i], dataset_entropy)
-        if gain < bestGain:
-            bestQuestion = questions[i]
-            bestGain = gain
+        if gain < best_gain:
+            best_question = questions[i]
+            best_gain = gain
 
-    return bestQuestion
+    return best_question
     
 
 def get_where(dataset, question, choice):
