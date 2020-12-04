@@ -87,7 +87,6 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'edufinder.rest_api',
-    'django_extensions',
 ]
 
 MIDDLEWARE = [
