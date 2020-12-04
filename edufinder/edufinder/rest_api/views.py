@@ -15,8 +15,7 @@ from django.db.models import Min
 from math import sqrt
 from .serializers import *
 from typing import List
-from .management.question_prioritization import Node, get_question_tree
-import json
+from .management.question_prioritization import get_question_tree
 
 
 class UserViewSet(viewsets.ModelViewSet):

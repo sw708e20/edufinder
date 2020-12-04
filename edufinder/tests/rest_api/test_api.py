@@ -1,6 +1,3 @@
-from rest_framework.reverse import reverse
-from rest_framework.test import APIRequestFactory
-from rest_framework.test import force_authenticate
 from rest_framework.test import APIClient
 from rest_framework import status
 from django.contrib.auth.models import User
@@ -8,10 +5,8 @@ from django.core import management
 import json
 
 from .test_base import TestBase
-from edufinder.rest_api.models import Question, Answer, UserAnswer, AnswerChoice
 from edufinder.rest_api.serializers import EducationSerializer
 from edufinder.rest_api.models import Question, Answer, UserAnswer, AnswerChoice, Education, EducationType
-from edufinder.rest_api import views
 
 class ApiTestBase(TestBase):
 
