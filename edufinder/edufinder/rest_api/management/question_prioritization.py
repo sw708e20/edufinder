@@ -14,6 +14,7 @@ def get_question_tree():
         questions = dataset.columns.tolist()[:-1]
         tree = create_branch(dataset, questions)
         cache.set('tree', tree)
+
     return tree
 
 def create_branch(dataset, questions):
@@ -115,17 +116,16 @@ class Node:
     def __init__(self, question):
         self.question = question
         self.children = dict()
-    def __repr__(self):
-        return self.question.question  
+        self.parent = None
 
-    def print_tree(self, choice, prefix = ""):
+    def print_tree(self, choice = "", prefix = ""):
         if self.parent is not None:
-            print(f'{prefix}{choice} -- {self.question.question}')
+            print(f'{prefix}{choice} -- {self.question}')
         else:
-            print(prefix + self.question.question)
+            print(f'{prefix} {self.question}')
 
         for choice, child in self.children.items():
-            child.print_tree(choice, prefix = prefix+"--")
+            child.print_tree(choice = choice, prefix = prefix+"--")
 
     def set_parent(self, parent):
         self.parent = parent

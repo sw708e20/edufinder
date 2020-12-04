@@ -1,9 +1,11 @@
 from django.test import TestCase
 from edufinder.rest_api.management.question_prioritization import *
+from .test_base import TestBase
 import pandas as pd
 import numpy as np
+from django.core.cache import cache
 
-class QuestionPrioritizationTest(TestCase):
+class QuestionPrioritizationTest(TestBase):
 
     def setUp(self):
         self.dataset = pd.DataFrame({'A': pd.Series([1, 2, -1, np.nan, 2, 1, 2]),
@@ -32,3 +34,11 @@ class QuestionPrioritizationTest(TestCase):
         
         self.assertEqual(round(gainA, 3), 0.877)
         self.assertEqual(round(gainB, 3), 0.985)
+
+    def test_tree_is_saves(self):
+        self.create_user_answer()
+
+        get_question_tree()
+        tree = cache.get('tree')
+        
+        self.assertIsNotNone(tree)

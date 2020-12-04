@@ -87,6 +87,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'corsheaders',
     'edufinder.rest_api',
+    'django_extensions',
 ]
 
 MIDDLEWARE = [
@@ -155,6 +156,13 @@ AUTH_PASSWORD_VALIDATORS = [
         'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
     },
 ]
+
+## Caching
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
+    }
+}
 
 
 # Internationalization

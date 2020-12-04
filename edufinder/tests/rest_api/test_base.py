@@ -20,3 +20,17 @@ class TestBase(TestCase):
         questions = Question.objects.all()
         yes_value = AnswerChoice.YES
         return [{"id": questions[i].pk, "answer": yes_value} for i in range(20)]
+
+    def create_user_answer(self):
+        self.create_questions()
+        self.create_educations()
+        questions = Question.objects.all()
+        yes_value = AnswerChoice.YES
+        
+        ua = UserAnswer.objects.create(education = Education.objects.first(), ip_addr='0.0.0.0')
+
+        for question in questions[:20]:
+            Answer.objects.create(question = question, answer = yes_value, userAnswer = ua)
+
+    
+        
