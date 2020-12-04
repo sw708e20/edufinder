@@ -16,10 +16,10 @@ def create_question_tree():
     cache.set('question_tree', tree)
     return tree
 
-def create_branch(dataset, questions):
+def create_branch(dataset, questions, depth = 1):
     left = len(questions)
     data_count = len(dataset.index)
-    if left == 0 or data_count == 0:
+    if left == 0 or data_count == 0 or depth > 13:
         return None
 
     question = find_local_best_question(dataset, questions)
@@ -30,7 +30,7 @@ def create_branch(dataset, questions):
     for choice in AnswerChoice:
         new_data_set = get_where(dataset, question, choice)
 
-        child = create_branch(new_data_set, questions.copy())
+        child = create_branch(new_data_set, questions.copy(), depth+1)
 
         if child:
             node.add_child(child, choice)

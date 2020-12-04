@@ -42,3 +42,15 @@ class QuestionPrioritizationTest(TestBase):
         tree = cache.get('question_tree')
 
         self.assertIsNotNone(tree)
+
+    def test_depth_is_13(self):
+        self.create_user_answer()
+
+        tree = get_question_tree()
+
+        depth = 1
+        while len(tree.children.values()) > 0:
+            tree = list(tree.children.values())[0]
+            depth += 1
+
+        self.assertEqual(depth, 13)
