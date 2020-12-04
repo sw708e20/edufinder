@@ -35,10 +35,10 @@ class QuestionPrioritizationTest(TestBase):
         self.assertEqual(round(gainA, 3), 0.877)
         self.assertEqual(round(gainB, 3), 0.985)
 
-    def test_tree_is_saves(self):
+    def test_tree_is_saved(self):
         self.create_user_answer()
 
         get_question_tree()
         tree = cache.get('tree')
-        
+
         self.assertIsNotNone(tree)
