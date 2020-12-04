@@ -82,7 +82,7 @@ def fetch_data():
     for user in user_answers:
         data = {'Decision': str(user.education.pk)}
         for answer in user.answer_set.all():
-            data[answer.question.pk] = answer.answer
+            data[answer.question.pk] = np.sign(answer.answer)
         pseries = pd.Series(data)
         df = df.append(pseries, ignore_index=True)
         
