@@ -27,7 +27,7 @@ def create_branch(dataset, questions, depth = 1):
     node = Node(question)
 
     questions.remove(question)
-    for choice in AnswerChoice:
+    for choice in [-1,0,1]:
         new_data_set = get_where(dataset, question, choice)
 
         child = create_branch(new_data_set, questions.copy(), depth+1)
