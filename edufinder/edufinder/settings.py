@@ -156,7 +156,7 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
-## Caching
+# Caching
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
