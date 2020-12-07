@@ -73,7 +73,7 @@ def get_nextquestion(previous_answers: List[dict]):
         if current_node is None:
             return get_random_question(previous_answers)
 
-    return Question.objects.get(pk = current_node.question)
+    return Question.objects.get(pk = current_node.question).pk
 
 
 def get_education_recommendation(answers):
