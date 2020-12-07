@@ -44,7 +44,7 @@ def create_branch(dataset, questions, depth = 1):
 
 
 def calculate_entropy(dataset):
-    proportion = get_proportion(dataset, 'Decision')
+    proportion = get_proportions(dataset, 'Decision')
 
     n_classes = np.count_nonzero(proportion)
     if n_classes <= 1:
@@ -60,7 +60,7 @@ def calculate_entropy(dataset):
 
 def calculate_gain(dataset, question_id, dataset_entropy):
     sum = 0
-    probs = get_proportion(dataset, question_id)
+    probs = get_proportions(dataset, question_id)
 
     for choice in AnswerChoice:
         try:
@@ -71,9 +71,13 @@ def calculate_gain(dataset, question_id, dataset_entropy):
     return  dataset_entropy - sum
 
 
-def get_proportion(dataset, column):
+def get_proportions(dataset, column):
     n_labels = len(dataset.index)
+
+    # Get list with amounts of each unique item in the column
     counts = dataset[column].value_counts()
+
+    # Get proportion of each item
     probs = counts / n_labels
     return pd.Series(probs)
 
