@@ -1,43 +1,21 @@
-import json
-
-from django.test import TestCase
 from rest_framework.test import APIClient
 from rest_framework import status
 from django.contrib.auth.models import User
 from django.core import management
 from edufinder.rest_api.models import Question, Answer, UserAnswer, AnswerChoice, Education, EducationType, AnswerConsensus
+import json
+from django.core.cache import cache
 
+from .test_base import TestBase
+from edufinder.rest_api.serializers import EducationSerializer
+from edufinder.rest_api.models import Question, Answer, UserAnswer, AnswerChoice, Education, EducationType
 
-class ApiTestBase(TestCase):
+class ApiTestBase(TestBase):
 
     def setUp(self):
         self.client = APIClient()
         user = User.objects.create_user(is_superuser=True, username="admin", password="admin")
         self.client.login(username=user.username, password=user.password)
-
-    @staticmethod
-    def create_questions():
-        questions = [Question(en=f'question #{i}?', da=f'question #{i}?') for i in range(30)]
-        Question.objects.bulk_create(questions)
-
-    @staticmethod
-    def create_educations():
-        educations = [Education(name=f'Education #{i}', description="description")
-                      for i in range(10)]
-        Education.objects.bulk_create(educations)
-
-        educations = Education.objects.all()
-        education_types = [EducationType(education=educations[i], name=f'EducationType #{i}',
-                                         url="http://example.com") for i in range(len(educations))]
-        EducationType.objects.bulk_create(education_types)
-
-    def get_answered_questions(self):
-        self.create_questions()
-        self.create_educations()
-        questions = Question.objects.all()
-        yes_value = AnswerChoice.YES
-        return [{"id": questions[i].pk, "answer": yes_value} for i in range(20)]
-
 
 class SearchEducationTest(ApiTestBase):
     def test_search_no_query(self):
@@ -122,6 +100,42 @@ class SearchEducationTest(ApiTestBase):
 
 class QuestionApiTest(ApiTestBase):
 
+    def test_POST_get_the_next_question(self):
+        question1 = Question.objects.create(en=f'question #1?', da=f'question #1?')
+        question2 = Question.objects.create(en=f'question #2?', da=f'question #2?')
+        question3 = Question.objects.create(en=f'question #3?', da=f'question #3?')
+        response = self.client.post(
+            f'/question/',
+            data=json.dumps([
+                {"id": question1.pk, "answer": AnswerChoice.NO}]),
+            content_type="application/json"
+        )
+
+        response = self.client.post(
+            f'/question/',
+            data=json.dumps([
+                {"id": question1.pk, "answer": AnswerChoice.NO},
+                {"id": question2.pk, "answer": AnswerChoice.YES}]),
+            content_type="application/json"
+        )
+
+        self.assertEqual(response.data['id'], question3.pk)
+
+    def test_POST_tree_has_been_created(self):
+        self.create_user_answer()
+        questions = Question.objects.all()
+        response = self.client.post(
+            f'/question/',
+            data=json.dumps([
+                {"id": questions[0].pk, "answer": AnswerChoice.NO},
+                {"id": questions[1].pk, "answer": AnswerChoice.YES}]),
+            content_type="application/json"
+        )
+
+        tree = cache.get('question_tree')
+
+        self.assertIsNotNone(tree)
+        
     def test_get_first_question(self):
         en_qst = 'First question.'
         da_qst = 'Første spørgsmål'
@@ -319,7 +333,7 @@ class RecommendApiTest(ApiTestBase):
         }, {}])
 
 
-class AnswerConsensusTest(TestCase):
+class AnswerConsensusTest(ApiTestBase):
 
     def setUp(self):
         self.education1 = Education.objects.create(name='Abba', description='desc')

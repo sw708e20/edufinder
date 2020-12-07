@@ -13,6 +13,7 @@ from django.db.models import Min
 from math import sqrt
 from .serializers import *
 from typing import List
+from .management.question_prioritization import get_question_tree
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -51,22 +52,28 @@ class EducationTypeViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
 
-def get_firstquestion():
-    """
-    Returns the primary key of the first question asked.
-    """
-    return 1
+def get_random_question(previous_answers):
+    return random.choice(list(set([x.id for x in Question.objects.all()]) -
+                            set([x['id'] for x in previous_answers])))
 
-
-def get_nextquestion(previous_answers: List[Answer]):
+def get_nextquestion(previous_answers: List[dict]):
     """
     Returns the primary key of the next question.
 
     Expected input format
         [ { id: int, answer: int }, ... ]
     """
-    return random.choice(list(set([x.id for x in Question.objects.all()]) -
-                              set([x['id'] for x in previous_answers])))
+
+    current_node = get_question_tree()
+    if current_node is None:
+        return get_random_question(previous_answers)
+
+    for answer in previous_answers:
+        current_node = current_node.children.get(answer['id'])
+        if current_node is None:
+            return get_random_question(previous_answers)
+
+    return Question.objects.get(pk = current_node.question).pk
 
 
 def get_education_recommendation(answers):
@@ -110,7 +117,7 @@ def search_educations(request: Request):
 @api_view(['GET', 'POST'])
 def next_question(request):
     if request.method == 'GET':
-        questionpk = get_firstquestion()
+        questionpk = get_nextquestion([])
     else:
         serializer = AnswerSerializer(data=request.data, many=True)
         serializer.is_valid(raise_exception=True)
