@@ -1,9 +1,7 @@
 import random
 
-from django.contrib.auth.models import User, Group
 from django.shortcuts import redirect
 from rest_framework import viewsets
-from rest_framework import status
 from rest_framework import permissions
 from rest_framework.decorators import api_view
 from rest_framework.decorators import parser_classes
@@ -70,7 +68,7 @@ def get_nextquestion(previous_answers: List[dict]):
     Returns the primary key of the next question.
 
     Expected input format
-        [ { id: int, question: str, answer: int }, ... ]
+        [ { id: int, answer: int }, ... ]
     """
 
     current_node = get_question_tree()
@@ -85,31 +83,26 @@ def get_nextquestion(previous_answers: List[dict]):
 
     return Question.objects.get(pk = current_node)
 
+
 def get_education_recommendation(answers):
     """
     Returns a list of educations 
     """
     question_ids = [a['id'] for a in answers]
-    answer_dict = {}
-    for answer in answers:
-        answer_dict[str(answer['id'])] = answer['answer']
-    pivot_tab = pivot(AnswerConsensus.objects.filter(question_id__in=question_ids), 'education', 'question', 'answer', aggregation=Min)
+    answer_dict = {str(answer['id']): answer['answer'] for answer in answers}
+    pivot_tab = pivot(AnswerConsensus.objects.filter(question_id__in=question_ids),
+                      'education', 'question', 'answer', aggregation=Min)
 
-    data_imp = {}
-    
-    for record in pivot_tab:
-        question_sum = 0
-        
-        for question_id in question_ids:
-            str_q_id = str(question_id)
-            question_sum +=  (answer_dict[str_q_id] - record[str_q_id])**2
-        
-        data_imp[record['education']] = sqrt(question_sum)
+    data_imp = {
+        record['education']:
+            sqrt(sum((answer_dict[str(_id)] - record[str(_id)])**2 for _id in question_ids))
+        for record in pivot_tab}
 
-    sorted_educations = sorted(data_imp.items(), key=lambda x: x[1])[:10]
-    education_ids = [s[0] for s in sorted_educations]
-    
-    return Education.objects.filter(id__in=education_ids).all()[:10]
+    sorted_educations = {x[0]: x[1] for x in sorted(data_imp.items(), key=lambda x: x[1])[:10]}
+
+    educations = Education.objects.filter(id__in=sorted_educations.keys()).all()[:10]
+
+    return sorted(educations, key=lambda x: sorted_educations[x.id])
 
 
 def get_educations(q: str):
@@ -134,11 +127,14 @@ def next_question(request):
     if request.method == 'GET':
         questionpk = get_firstquestion()
     else:
-        questionpk = get_nextquestion(request.data)
+        serializer = AnswerSerializer(data=request.data, many=True)
+        serializer.is_valid(raise_exception=True)
+        questionpk = get_nextquestion(serializer.data)
 
     question = Question.objects.get(pk=questionpk)
     serializer = QuestionSerializer(question)
     return Response(serializer.data)
+
 
 def get_client_ip(request):
     x_forwarded_for = request.META.get('HTTP_X_FORWARDED_FOR')
@@ -147,6 +143,7 @@ def get_client_ip(request):
     else:
         ip = request.META.get('REMOTE_ADDR')
     return ip
+
 
 def log_recommender_input(request, serialized_data):
     ip = get_client_ip(request)
@@ -157,6 +154,7 @@ def log_recommender_input(request, serialized_data):
         ques = Question.objects.get(pk=ans['id'])
         Answer.objects.create(question=ques, answer=ans['answer'], userAnswer=answer)
 
+
 @api_view(['POST'])
 @parser_classes([JSONParser])
 def recommend(request):
@@ -165,6 +163,7 @@ def recommend(request):
     recommendations = get_education_recommendation(serializer.data)
     serializer = EducationSerializer(recommendations, many=True)
     return Response(serializer.data)
+
 
 @api_view(['POST'])
 @parser_classes([JSONParser])

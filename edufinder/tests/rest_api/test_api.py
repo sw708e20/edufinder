@@ -2,7 +2,7 @@ from rest_framework.test import APIClient
 from rest_framework import status
 from django.contrib.auth.models import User
 from django.core import management
-import json
+from edufinder.rest_api.models import Question, Answer, UserAnswer, AnswerChoice, Education, EducationType, AnswerConsensus
 
 from .test_base import TestBase
 from edufinder.rest_api.serializers import EducationSerializer
@@ -13,7 +13,7 @@ class ApiTestBase(TestBase):
     def setUp(self):
         self.client = APIClient()
         user = User.objects.create_user(is_superuser=True, username="admin", password="admin")
-        self.client.login(username="admin", password="admin")
+        self.client.login(username=user.username, password=user.password)
 
 class SearchEducationTest(ApiTestBase):
     def test_search_no_query(self):
@@ -34,57 +34,57 @@ class SearchEducationTest(ApiTestBase):
 
         response = self.client.get(
             '/educations/',
-            data = {
+            data={
                 'q': 'Educatio'
             }
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 10)
-    
+
     def test_search_ci_query(self):
         self.create_educations()
 
         response = self.client.get(
             '/educations/',
-            data = {
+            data={
                 'q': 'educatio'
             }
         )
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 10)
-    
+
     def test_ignore_additional_params(self):
         self.create_educations()
 
         response = self.client.get(
             '/educations/',
-            data = {
+            data={
                 'q': 'Educatio',
                 'a': 123
             }
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 10)
-    
+
     def test_no_result(self):
         self.create_educations()
 
         response = self.client.get(
             '/educations/',
-            data = {
+            data={
                 'q': 'no_exist'
             }
         )
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(len(response.data), 0)
-    
+
     def test_query_too_long(self):
         self.create_educations()
 
         response = self.client.get(
             '/educations/',
-            data = {
+            data={
                 'q': 'b'*201
             }
         )
@@ -95,11 +95,11 @@ class SearchEducationTest(ApiTestBase):
             ]
         })
 
+
 class QuestionApiTest(ApiTestBase):
 
     def test_POST_questions_returns_okay(self):
         self.create_questions()
-        
 
         response = self.client.post(
             f'/question/',
@@ -108,19 +108,106 @@ class QuestionApiTest(ApiTestBase):
                 {"id": 2, "answer": AnswerChoice.PROBABLY}]),
             content_type="application/json"
         )
-        
+
         self.assertEqual(response.status_code, 200)
         self.assertIsNotNone(response.data['en'])
         self.assertIsNotNone(response.data['da'])
 
+    def test_POST_questions_returns_wrong_value(self):
+        self.create_questions()
+
+        response = self.client.post(
+            f'/question/',
+            data=json.dumps([
+                {"id": 1, "answer": "123321"},
+                {"id": 2, "answer": "321321"}]),
+            content_type="application/json"
+        )
+
+        self.assertEqual(response.status_code, 400)
+
+    def test_POST_questions_returns_field_required(self):
+        self.create_questions()
+
+        response = self.client.post(
+            f'/question/',
+            data=json.dumps([
+                {"id": 1, "answe2r": "123321"},
+                {"id": 2, "answe2r": "321321"}]),
+            content_type="application/json"
+        )
+
+        self.assertEqual(response.status_code, 400)
+
 
 class RecommendApiTest(ApiTestBase):
-    def create_answerconsensus(self):
-        management.call_command('create_consensus')
+
+    def setUp(self):
+        self.get_answered_questions()
+        self.education1 = Education.objects.create(name='Test education', description='description')
+        user_answer = UserAnswer.objects.create(education=self.education1, ip_addr='127.0.0.1')
+
+        Answer.objects.bulk_create([Answer(question=qst, answer=AnswerChoice.NO, userAnswer=user_answer) for qst in Question.objects.all()])
+
+        self.education2 = Education.objects.create(name='Test education2', description='desc2')
+        user_answer2 = UserAnswer.objects.create(education=self.education2, ip_addr='127.0.0.1')
+
+        Answer.objects.bulk_create([Answer(question=qst, answer=AnswerChoice.PROBABLY_NOT, userAnswer=user_answer2) for qst in Question.objects.all()])
+
+        management.call_command('update_consensus')
+
+    @staticmethod
+    def search_recommend_list(list, name):
+        for i in list:
+            if i['name'] == name:
+                return i
+        return None
+
+    def test_recommender_match(self):
+        response = self.client.post(
+            f'/recommend/',
+            data=json.dumps(
+                [{"id": q.id, "answer":AnswerChoice.NO} for q in Question.objects.all()],
+            ),
+            content_type="application/json"
+        )
+        self.assertIsNotNone(self.search_recommend_list(response.data, self.education1.name))
+
+    def test_recommender_match_order(self):
+        response = self.client.post(
+            f'/recommend/',
+            data=json.dumps(
+                [{"id": q.id, "answer":AnswerChoice.NO} for q in Question.objects.all()],
+            ),
+            content_type="application/json"
+        )
+        self.assertEqual(response.data[0]['name'], self.education1.name)
+
+    def test_recommender_match_order2(self):
+        answers = [{"id": q.id, "answer":AnswerChoice.PROBABLY_NOT} for q in Question.objects.all()]
+        # Skew the results towards education1
+        answers[1] = {"id": answers[1]["id"], "answer": AnswerChoice.NO}
+        response = self.client.post(
+            f'/recommend/',
+            data=json.dumps(answers),
+            content_type="application/json"
+        )
+        self.assertEqual(response.data[0]['name'], self.education2.name)
+        self.assertEqual(response.data[1]['name'], self.education1.name)
+
+    def test_recommender_no_match(self):
+        response = self.client.post(
+            f'/recommend/',
+            data=json.dumps(
+                [{"id": q.id, "answer":AnswerChoice.DONT_KNOW} for q in Question.objects.all()],
+            ),
+            content_type="application/json"
+        )
+        self.assertIsNone(self.search_recommend_list(response.data, self.education1.name))
 
     def test_POST_to_recommend_returns_educations(self):
         questions_list = self.get_answered_questions()
-        self.create_answerconsensus()
+        management.call_command('update_consensus')
 
         response = self.client.post(
             f'/recommend/',
@@ -131,12 +218,10 @@ class RecommendApiTest(ApiTestBase):
         )
         self.assertIsNotNone(response.data)
         self.assertTrue(isinstance(response.data, list))
-        self.assertEqual(response.data[0]['id'], 1)
-    
-    def test_POST_validator_not_json(self):
-        response = self.client.post('/recommend/',
-                    data="abba",
-                    content_type="application/json")
+        self.assertIsNotNone(response.data[0].get('id'))
+
+    def test_POST_validator_no_json(self):
+        response = self.client.post('/recommend/', data="abba", content_type="application/json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
 
     def test_POST_validator_bad_json(self):
@@ -144,15 +229,12 @@ class RecommendApiTest(ApiTestBase):
             "id": 1,
             "answer": 2
         }
-        response = self.client.post('/recommend/',
-                    data=json.dumps(body),
-                    content_type="application/json")
+        response = self.client.post('/recommend/', data=json.dumps(body),
+                                    content_type="application/json")
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
-
 
     def test_POST_questions_returns_incorrect_answertype(self):
         self.create_questions()
-        
 
         response = self.client.post(
             f'/recommend/',
@@ -161,7 +243,7 @@ class RecommendApiTest(ApiTestBase):
                 {"id": 2, "answer": 1}]),
             content_type="application/json"
         )
-        
+
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data, [{
             'answer': [
@@ -169,10 +251,8 @@ class RecommendApiTest(ApiTestBase):
             ]
         }, {}])
 
-
     def test_POST_questions_with_ints(self):
         self.create_questions()
-        
 
         response = self.client.post(
             f'/recommend/',
@@ -181,15 +261,12 @@ class RecommendApiTest(ApiTestBase):
                 {"id": 2, "answer": 1}]),
             content_type="application/json"
         )
-        
+
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertIsNotNone(response.data)
-        
-
 
     def test_POST_questions_with_int_outofrange(self):
         self.create_questions()
-        
 
         response = self.client.post(
             f'/recommend/',
@@ -198,7 +275,7 @@ class RecommendApiTest(ApiTestBase):
                 {"id": 2, "answer": 1}]),
             content_type="application/json"
         )
-        
+
         self.assertEqual(response.status_code, status.HTTP_400_BAD_REQUEST)
         self.assertEqual(response.data, [{
             'answer': [
@@ -215,17 +292,14 @@ class GuessApiTest(ApiTestBase):
         question1 = Question.objects.create(en="Test question", da="Test question")
         question2 = Question.objects.create(en="Test question", da="Test question")
         self.create_educations()
-        data = {"education": Education.objects.first().pk, "questions": 
+        data = {"education": Education.objects.first().pk, "questions":
                 [
-                    {"id": question1.pk, "answer": 2}, 
+                    {"id": question1.pk, "answer": 2},
                     {"id": question2.pk, "answer": -2}]}
 
-        response = self.client.post('/guess/',
-            data=json.dumps(data),
-            content_type="application/json",
-            REMOTE_ADDR=ip_addr,
-        )
-        
+        response = self.client.post('/guess/', data=json.dumps(data),
+                                    content_type="application/json", REMOTE_ADDR=ip_addr)
+
         ua = UserAnswer.objects.first()
 
         self.assertIsNotNone(ua)
@@ -239,11 +313,11 @@ class GuessApiTest(ApiTestBase):
         questions_list = self.get_answered_questions()
         education = Education.objects.first()
         data = {"education": education.pk, "questions": questions_list}
-        
-        response = self.client.post('/guess/',
-                    data=json.dumps(data),
-                    content_type="application/json")
+
+        response = self.client.post('/guess/', data=json.dumps(data),
+                                    content_type="application/json")
 
         self.assertEqual(UserAnswer.objects.all().count(), 1)
-        self.assertListEqual([question['id'] for question in questions_list], [answer.pk for answer in Answer.objects.all()])
+        self.assertListEqual([question['id'] for question in questions_list],
+                             [answer.pk for answer in Answer.objects.all()])
         self.assertEqual(UserAnswer.objects.first().education, Education.objects.first())
