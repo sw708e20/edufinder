@@ -4,6 +4,8 @@ import numpy as np
 from math import log, e
 from django.core.cache import cache
 
+MAX_DEPTH = 13
+
 def get_question_tree():
     return cache.get('question_tree') or create_question_tree()
 
@@ -19,7 +21,7 @@ def create_question_tree():
 def create_branch(dataset, questions, depth = 1):
     left = len(questions)
     data_count = len(dataset.index)
-    if left == 0 or data_count == 0 or depth > 13:
+    if left == 0 or data_count == 0 or depth > MAX_DEPTH:
         return None
 
     question = find_local_best_question(dataset, questions)
@@ -27,6 +29,10 @@ def create_branch(dataset, questions, depth = 1):
     node = Node(question)
 
     questions.remove(question)
+
+    # Iterate through the reduced answer choices 
+    # -1 represents the negative answers, 0 represents "don't know" 
+    # and 1 represents the postive answers 
     for choice in [-1,0,1]:
         new_data_set = get_where(dataset, question, choice)
 
@@ -82,6 +88,7 @@ def fetch_data():
     for user in user_answers:
         data = {'Decision': str(user.education.pk)}
         for answer in user.answer_set.all():
+            # Reduce the 5 possible choices to 3: (-1, 0 and 1) 
             data[answer.question.pk] = np.sign(answer.answer)
         pseries = pd.Series(data)
         df = df.append(pseries, ignore_index=True)
