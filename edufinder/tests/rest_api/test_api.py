@@ -122,6 +122,17 @@ class SearchEducationTest(ApiTestBase):
 
 class QuestionApiTest(ApiTestBase):
 
+    def test_get_first_question(self):
+        en_qst = 'First question.'
+        da_qst = 'Første spørgsmål'
+        Question.objects.create(en=en_qst, da=da_qst)
+        response = self.client.get(
+            '/question/'
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['en'], en_qst)
+        self.assertEqual(response.data['da'], da_qst)
+
     def test_POST_questions_returns_okay(self):
         self.create_questions()
 
@@ -401,6 +412,35 @@ class GuessApiTest(ApiTestBase):
         self.assertTrue(abs(ua.datetime - datetime.now(timezone.utc)) < timedelta(seconds=1))
         self.assertIsNotNone(ua.ip_addr)
         self.assertEqual(ua.ip_addr, ip_addr)
+
+    def test_POST_correct_time_and_ip_fwd(self):
+        from datetime import datetime, timezone, timedelta
+        ip_addr = "127.0.0.1"
+        fwd_ip = "8.8.8.8"
+        question1 = Question.objects.create(en="Test question", da="Test question")
+        question2 = Question.objects.create(en="Test question", da="Test question")
+        self.create_educations()
+        data = {"education": Education.objects.first().pk, "questions":
+                [
+                    {"id": question1.pk, "answer": 2},
+                    {"id": question2.pk, "answer": -2}]}
+
+        response = self.client.post(
+            '/guess/', 
+            data=json.dumps(data),
+            content_type="application/json", 
+            REMOTE_ADDR=ip_addr,
+            HTTP_X_FORWARDED_FOR=fwd_ip
+        )
+
+        ua = UserAnswer.objects.first()
+
+        self.assertIsNotNone(ua)
+        self.assertEqual(response.status_code, 302)
+        self.assertIsNotNone(ua.datetime)
+        self.assertTrue(abs(ua.datetime - datetime.now(timezone.utc)) < timedelta(seconds=1))
+        self.assertIsNotNone(ua.ip_addr)
+        self.assertEqual(ua.ip_addr, fwd_ip)
 
     def test_POST_saves_answers(self):
         questions_list = self.get_answered_questions()
