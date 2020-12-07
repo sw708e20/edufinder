@@ -128,15 +128,6 @@ class Node:
         self.children = dict()
         self.parent = None
 
-    def print_tree(self, choice = "", prefix = ""):
-        if self.parent:
-            print(f'{prefix}{choice} -- {self.question}')
-        else:
-            print(f'{prefix} {self.question}')
-
-        for choice, child in self.children.items():
-            child.print_tree(choice = choice, prefix = prefix+"--")
-
     def add_child(self, node, choice):
         self.children[choice] = node
         node.parent = self
