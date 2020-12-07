@@ -110,7 +110,7 @@ def find_local_best_question(dataset, questions):
     best_gain = calculate_gain(dataset, questions[0], dataset_entropy)
     for i in range(1, len(questions)):
         gain = calculate_gain(dataset, questions[i], dataset_entropy)
-        if gain < best_gain:
+        if gain > best_gain:
             best_question = questions[i]
             best_gain = gain
 
