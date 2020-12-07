@@ -99,6 +99,22 @@ class SearchEducationTest(ApiTestBase):
 
 class QuestionApiTest(ApiTestBase):
 
+    def test_POST_get_the_next_question(self):
+        question1 = Question.objects.create(en=f'question #1?', da=f'question #1?')
+        question2 = Question.objects.create(en=f'question #2?', da=f'question #2?')
+        question3 = Question.objects.create(en=f'question #3?', da=f'question #3?')
+
+        response = self.client.post(
+            f'/question/',
+            data=json.dumps([
+                {"id": question1.pk, "answer": AnswerChoice.NO},
+                {"id": question2.pk, "answer": AnswerChoice.PROBABLY}]),
+            content_type="application/json"
+        )
+
+        self.assertEqual(response.data['id'], question3.pk)
+
+
     def test_POST_questions_returns_okay(self):
         self.create_questions()
 

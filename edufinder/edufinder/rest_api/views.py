@@ -52,13 +52,6 @@ class EducationTypeViewSet(viewsets.ModelViewSet):
     permission_classes = [permissions.IsAuthenticated]
 
 
-def get_firstquestion():
-    """
-    Returns the primary key of the first question asked.
-    """
-    return 1
-
-
 def get_random_question(previous_answers):
     return random.choice(list(set([x.id for x in Question.objects.all()]) -
                             set([x['id'] for x in previous_answers])))
@@ -125,7 +118,7 @@ def search_educations(request: Request):
 @api_view(['GET', 'POST'])
 def next_question(request):
     if request.method == 'GET':
-        questionpk = get_firstquestion()
+        questionpk = get_nextquestion([])
     else:
         serializer = AnswerSerializer(data=request.data, many=True)
         serializer.is_valid(raise_exception=True)
