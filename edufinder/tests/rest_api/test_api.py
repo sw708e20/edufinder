@@ -3,6 +3,7 @@ from rest_framework import status
 from django.contrib.auth.models import User
 from django.core import management
 from edufinder.rest_api.models import Question, Answer, UserAnswer, AnswerChoice, Education, EducationType, AnswerConsensus
+import json
 
 from .test_base import TestBase
 from edufinder.rest_api.serializers import EducationSerializer
