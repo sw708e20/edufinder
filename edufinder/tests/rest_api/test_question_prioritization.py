@@ -54,3 +54,23 @@ class QuestionPrioritizationTest(TestBase):
             depth += 1
 
         self.assertEqual(depth, 13)
+
+    def test_find_local_best_question(self):
+        self.create_questions()
+        self.create_educations()
+        yes_value = AnswerChoice.YES
+        question1 = Question.objects.get(pk = 1)
+        question2 = Question.objects.get(pk = 2)
+
+        ua1 = UserAnswer.objects.create(education = Education.objects.get(pk = 1), ip_addr='0.0.0.0')
+        Answer.objects.create(question = question1, answer = AnswerChoice.YES, userAnswer = ua1)
+        Answer.objects.create(question = question2, answer = AnswerChoice.YES, userAnswer = ua1)
+
+        ua2 = UserAnswer.objects.create(education = Education.objects.get(pk = 2), ip_addr='0.0.0.0')
+        Answer.objects.create(question = question1, answer = AnswerChoice.YES, userAnswer = ua2)
+        Answer.objects.create(question = question2, answer = AnswerChoice.NO, userAnswer = ua2)
+
+        dataset = fetch_data()
+        best_question = find_local_best_question(dataset=dataset, questions=[question1.pk, question2.pk])
+
+        self.assertEqual(best_question, question2.pk)
