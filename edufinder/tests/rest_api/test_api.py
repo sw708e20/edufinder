@@ -122,6 +122,17 @@ class SearchEducationTest(ApiTestBase):
 
 class QuestionApiTest(ApiTestBase):
 
+    def test_get_first_question(self):
+        en_qst = 'First question.'
+        da_qst = 'Første spørgsmål'
+        Question.objects.create(en=en_qst, da=da_qst)
+        response = self.client.get(
+            '/question/'
+        )
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data['en'], en_qst)
+        self.assertEqual(response.data['da'], da_qst)
+
     def test_POST_questions_returns_okay(self):
         self.create_questions()
 
@@ -308,6 +319,75 @@ class RecommendApiTest(ApiTestBase):
         }, {}])
 
 
+class AnswerConsensusTest(TestCase):
+
+    def setUp(self):
+        self.education1 = Education.objects.create(name='Abba', description='desc')
+        self.education2 = Education.objects.create(name='Abba', description='desc')
+        questions = [Question(en=f'question #{i}?', da=f'question #{i}?') for i in range(30)]
+        Question.objects.bulk_create(questions)
+        self.create_answers(self.education1, AnswerChoice.YES)
+        self.create_answers(self.education1, AnswerChoice.YES)
+
+        self.create_answers(self.education2, AnswerChoice.NO)
+        self.create_answers(self.education2, AnswerChoice.NO)
+
+    @staticmethod
+    def create_answers(curr_edu, curr_ans):
+        ua = UserAnswer.objects.create(education=curr_edu, ip_addr='127.0.0.1')
+        Answer.objects.bulk_create([Answer(answer=curr_ans, question=q, userAnswer=ua) for q in Question.objects.all()])
+
+    @staticmethod
+    def count_answerconsensus(curr_edu, curr_ans):
+        return AnswerConsensus.objects.filter(education=curr_edu, answer=curr_ans).count()
+
+    def test_answer_consensus_created(self):
+        self.assertEqual(AnswerConsensus.objects.count(), 0)
+        management.call_command('update_consensus')
+        self.assertNotEqual(AnswerConsensus.objects.count(), 0)
+
+    def test_answer_consensus_most_popular(self):
+        management.call_command('update_consensus')
+        self.assertEqual(self.count_answerconsensus(self.education1, AnswerChoice.YES), Question.objects.count())
+
+    def test_answer_consensus_most_popular_add1(self):
+        self.create_answers(self.education1, AnswerChoice.NO)
+        management.call_command('update_consensus')
+        self.assertEqual(self.count_answerconsensus(self.education1, AnswerChoice.YES), Question.objects.count())
+
+    def test_answer_consensus_equal_number_add2(self):
+        self.create_answers(self.education1, AnswerChoice.NO)
+        self.create_answers(self.education1, AnswerChoice.NO)
+        management.call_command('update_consensus')
+        self.assertEqual(self.count_answerconsensus(self.education1, AnswerChoice.YES), Question.objects.count())
+
+    def test_answer_consensus_equal_number_add3(self):
+        self.create_answers(self.education1, AnswerChoice.NO)
+        self.create_answers(self.education1, AnswerChoice.NO)
+        self.create_answers(self.education1, AnswerChoice.NO)
+        management.call_command('update_consensus')
+        self.assertEqual(self.count_answerconsensus(self.education1, AnswerChoice.NO), Question.objects.count())
+
+    def test_answer_consensus_number_switchback(self):
+        self.create_answers(self.education1, AnswerChoice.NO)
+        self.create_answers(self.education1, AnswerChoice.NO)
+        self.create_answers(self.education1, AnswerChoice.NO)
+        management.call_command('update_consensus')
+        self.assertEqual(self.count_answerconsensus(self.education1, AnswerChoice.NO), Question.objects.count())
+        self.create_answers(self.education1, AnswerChoice.YES)
+        management.call_command('update_consensus')
+        self.assertEqual(self.count_answerconsensus(self.education1, AnswerChoice.YES), Question.objects.count())
+
+    def test_answer_consensus_no_effect_edu2(self):
+        self.create_answers(self.education2, AnswerChoice.NO)
+        management.call_command('update_consensus')
+        self.assertEqual(self.count_answerconsensus(self.education1, AnswerChoice.YES), Question.objects.count())
+
+    def test_answer_consensus_default_dont_know(self):
+        new_edu = Education.objects.create(name='Abba2', description='Abba2')
+        management.call_command('update_consensus')
+        self.assertEqual(self.count_answerconsensus(new_edu, AnswerChoice.DONT_KNOW), Question.objects.count())
+
 class GuessApiTest(ApiTestBase):
 
     def test_POST_correct_time_and_ip(self):
@@ -332,6 +412,35 @@ class GuessApiTest(ApiTestBase):
         self.assertTrue(abs(ua.datetime - datetime.now(timezone.utc)) < timedelta(seconds=1))
         self.assertIsNotNone(ua.ip_addr)
         self.assertEqual(ua.ip_addr, ip_addr)
+
+    def test_POST_correct_time_and_ip_fwd(self):
+        from datetime import datetime, timezone, timedelta
+        ip_addr = "127.0.0.1"
+        fwd_ip = "8.8.8.8"
+        question1 = Question.objects.create(en="Test question", da="Test question")
+        question2 = Question.objects.create(en="Test question", da="Test question")
+        self.create_educations()
+        data = {"education": Education.objects.first().pk, "questions":
+                [
+                    {"id": question1.pk, "answer": 2},
+                    {"id": question2.pk, "answer": -2}]}
+
+        response = self.client.post(
+            '/guess/', 
+            data=json.dumps(data),
+            content_type="application/json", 
+            REMOTE_ADDR=ip_addr,
+            HTTP_X_FORWARDED_FOR=fwd_ip
+        )
+
+        ua = UserAnswer.objects.first()
+
+        self.assertIsNotNone(ua)
+        self.assertEqual(response.status_code, 302)
+        self.assertIsNotNone(ua.datetime)
+        self.assertTrue(abs(ua.datetime - datetime.now(timezone.utc)) < timedelta(seconds=1))
+        self.assertIsNotNone(ua.ip_addr)
+        self.assertEqual(ua.ip_addr, fwd_ip)
 
     def test_POST_saves_answers(self):
         questions_list = self.get_answered_questions()
