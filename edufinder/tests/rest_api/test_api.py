@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from django.core import management
 from edufinder.rest_api.models import Question, Answer, UserAnswer, AnswerChoice, Education, EducationType, AnswerConsensus
 import json
+from django.core.cache import cache
 
 from .test_base import TestBase
 from edufinder.rest_api.serializers import EducationSerializer
@@ -103,17 +104,37 @@ class QuestionApiTest(ApiTestBase):
         question1 = Question.objects.create(en=f'question #1?', da=f'question #1?')
         question2 = Question.objects.create(en=f'question #2?', da=f'question #2?')
         question3 = Question.objects.create(en=f'question #3?', da=f'question #3?')
+        response = self.client.post(
+            f'/question/',
+            data=json.dumps([
+                {"id": question1.pk, "answer": AnswerChoice.NO}]),
+            content_type="application/json"
+        )
 
         response = self.client.post(
             f'/question/',
             data=json.dumps([
                 {"id": question1.pk, "answer": AnswerChoice.NO},
-                {"id": question2.pk, "answer": AnswerChoice.PROBABLY}]),
+                {"id": question2.pk, "answer": AnswerChoice.YES}]),
             content_type="application/json"
         )
 
         self.assertEqual(response.data['id'], question3.pk)
 
+    def test_POST_tree_has_been_created(self):
+        self.create_user_answer()
+        questions = Question.objects.all()
+        response = self.client.post(
+            f'/question/',
+            data=json.dumps([
+                {"id": questions[0].pk, "answer": AnswerChoice.NO},
+                {"id": questions[1].pk, "answer": AnswerChoice.YES}]),
+            content_type="application/json"
+        )
+
+        tree = cache.get('question_tree')
+
+        self.assertIsNotNone(tree)
 
     def test_POST_questions_returns_okay(self):
         self.create_questions()

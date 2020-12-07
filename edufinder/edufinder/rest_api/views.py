@@ -65,16 +65,15 @@ def get_nextquestion(previous_answers: List[dict]):
     """
 
     current_node = get_question_tree()
-
     if current_node is None:
         return get_random_question(previous_answers)
 
     for answer in previous_answers:
+        current_node = current_node.children.get(answer['id'])
         if current_node is None:
             return get_random_question(previous_answers)
-        current_node = current_node.children.get(answer['id'])
 
-    return Question.objects.get(pk = current_node)
+    return Question.objects.get(pk = current_node.question)
 
 
 def get_education_recommendation(answers):
