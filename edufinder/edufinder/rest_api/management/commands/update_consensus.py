@@ -43,7 +43,7 @@ class Command(BaseCommand):
     @staticmethod
     def ensure_consensus_exists():
         AnswerConsensus.objects.bulk_create([
-            AnswerConsensus(question=question, education=education, answer=AnswerChoice.DONT_KNOW)
-            for education in Education.objects.all()
+            AnswerConsensus(question=question, education_id=education_id_dict["education"], answer=AnswerChoice.DONT_KNOW)
+            for education_id_dict in UserAnswer.objects.values("education").distinct()
             for question in Question.objects.all()
-            if not AnswerConsensus.objects.filter(education=education, question=question).exists()])
+            if not AnswerConsensus.objects.filter(education_id=education_id_dict["education"], question=question).exists()])
