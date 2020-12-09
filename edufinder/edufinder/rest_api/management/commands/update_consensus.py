@@ -44,6 +44,9 @@ class Command(BaseCommand):
     def ensure_consensus_exists():
         AnswerConsensus.objects.bulk_create([
             AnswerConsensus(question=question, education=education, answer=AnswerChoice.DONT_KNOW)
-            for education in Education.objects.all()
+            for education in set(map(get_education, UserAnswer.objects.all()))
             for question in Question.objects.all()
             if not AnswerConsensus.objects.filter(education=education, question=question).exists()])
+
+def get_education(userAnswer):
+    return userAnswer.education
