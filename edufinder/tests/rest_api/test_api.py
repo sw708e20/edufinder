@@ -480,7 +480,7 @@ class GuessApiTest(ApiTestBase):
         self.assertEqual(UserAnswer.objects.first().education, Education.objects.first())
 
 
-class DecsionTreeApiTest(ApiTestBase):
+class DecisonTreeApiTest(ApiTestBase):
 
     def test_can_delete_cache(self):
         self.create_user_answer()
@@ -495,6 +495,6 @@ class DecsionTreeApiTest(ApiTestBase):
         response = self.client.delete(
             f'/decision-tree/'
         )
-        
+
         self.assertIsNone(cache.get('question_tree'))
         self.assertEqual(response.status_code, 200)
