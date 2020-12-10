@@ -402,6 +402,7 @@ class AnswerConsensusTest(ApiTestBase):
         management.call_command('update_consensus')
         self.assertEqual(self.count_answerconsensus(new_edu, AnswerChoice.DONT_KNOW), Question.objects.count())
 
+
 class GuessApiTest(ApiTestBase):
 
     def test_POST_correct_time_and_ip(self):
@@ -468,3 +469,23 @@ class GuessApiTest(ApiTestBase):
         self.assertListEqual([question['id'] for question in questions_list],
                              [answer.pk for answer in Answer.objects.all()])
         self.assertEqual(UserAnswer.objects.first().education, Education.objects.first())
+
+
+class DecsionTreeApiTest(ApiTestBase):
+
+    def test_can_delete_cache(self):
+        self.create_user_answer()
+        questions = Question.objects.all()
+        self.client.post(
+            f'/question/',
+            data=json.dumps([
+                {"id": questions[0].pk, "answer": AnswerChoice.NO}]),
+            content_type="application/json"
+        )
+    
+        response = self.client.delete(
+            f'/decision-tree/'
+        )
+        
+        self.assertIsNone(cache.get('question_tree'))
+        self.assertEqual(response.status_code, 200)

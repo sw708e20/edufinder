@@ -14,6 +14,8 @@ from math import sqrt
 from .serializers import *
 from typing import List
 from .management.question_prioritization import get_question_tree
+from django.core.cache import cache
+from django.http import HttpResponse
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -165,3 +167,10 @@ def guess(request):
     log_recommender_input(request, serializer.data)
     
     return redirect("/")
+
+
+@api_view(['DELETE'])
+def decision_tree(request):
+    cache.delete('question_tree')
+
+    return HttpResponse(status=200)

@@ -29,5 +29,6 @@ urlpatterns = [
     path('recommend/', views.recommend),
     path('guess/', views.guess),
     path('educations/', views.search_educations),
+    path('decision-tree/', views.decision_tree),
     path('api-auth/', include('rest_framework.urls', namespace='rest_framework'))
 ]
