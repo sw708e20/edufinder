@@ -3,6 +3,7 @@ import pandas as pd
 import numpy as np
 from math import log, e
 from django.core.cache import cache
+from datetime import datetime
 
 MAX_DEPTH = 13
 
@@ -16,6 +17,7 @@ def create_question_tree():
     questions = dataset.columns.tolist()[:-1]
     tree = create_branch(dataset, questions)
     cache.set('question_tree', tree)
+    cache.set('question_tree_timestamp', datetime.now())
     return tree
 
 def create_branch(dataset, questions, depth = 1):
