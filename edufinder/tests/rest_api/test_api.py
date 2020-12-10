@@ -245,6 +245,15 @@ class RecommendApiTest(ApiTestBase):
         self.assertEqual(response.data[1]['name'], self.education1.name)
 
     def test_recommender_no_match(self):
+        #Add 10 extra educations to remove education1 from recommendation
+        for i in range(10):
+            education = Education.objects.create(name='Some education', description='description')
+            user_answer = UserAnswer.objects.create(education=education, ip_addr='127.0.0.1')
+
+            Answer.objects.bulk_create([Answer(question=qst, answer=AnswerChoice.DONT_KNOW, userAnswer=user_answer) for qst in Question.objects.all()])
+
+        management.call_command('update_consensus')
+
         response = self.client.post(
             f'/recommend/',
             data=json.dumps(
@@ -358,7 +367,7 @@ class AnswerConsensusTest(ApiTestBase):
     def test_answer_consensus_created(self):
         self.assertEqual(AnswerConsensus.objects.count(), 0)
         management.call_command('update_consensus')
-        self.assertNotEqual(AnswerConsensus.objects.count(), 0)
+        self.assertEqual(AnswerConsensus.objects.count(), Question.objects.count() * UserAnswer.objects.values("education").distinct().count())
 
     def test_answer_consensus_most_popular(self):
         management.call_command('update_consensus')
@@ -400,7 +409,7 @@ class AnswerConsensusTest(ApiTestBase):
     def test_answer_consensus_default_dont_know(self):
         new_edu = Education.objects.create(name='Abba2', description='Abba2')
         management.call_command('update_consensus')
-        self.assertEqual(self.count_answerconsensus(new_edu, AnswerChoice.DONT_KNOW), Question.objects.count())
+        self.assertEqual(self.count_answerconsensus(new_edu, AnswerChoice.DONT_KNOW), 0)
 
 
 class GuessApiTest(ApiTestBase):
