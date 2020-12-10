@@ -465,6 +465,7 @@ class GuessApiTest(ApiTestBase):
         self.assertTrue(abs(ua.datetime - datetime.now(timezone.utc)) < timedelta(seconds=1))
         self.assertIsNotNone(ua.ip_addr)
         self.assertEqual(ua.ip_addr, fwd_ip)
+        self.assertEqual(Answer.objects.count(), 2)
 
     def test_POST_saves_answers(self):
         questions_list = self.get_answered_questions()
