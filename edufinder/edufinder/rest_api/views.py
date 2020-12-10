@@ -16,6 +16,7 @@ from typing import List
 from .management.question_prioritization import get_question_tree
 from django.core.cache import cache
 from django.http import HttpResponse
+from django.db import transaction
 
 
 class UserViewSet(viewsets.ModelViewSet):
@@ -139,15 +140,14 @@ def get_client_ip(request):
     return ip
 
 
+@transaction.atomic
 def log_recommender_input(request, serialized_data):
     ip = get_client_ip(request)
     education = Education.objects.get(pk=serialized_data['education'])
 
-    answer = UserAnswer.objects.create(ip_addr=ip, education=education)
-    for ans in serialized_data['questions']:
-        ques = Question.objects.get(pk=ans['id'])
-        Answer.objects.create(question=ques, answer=ans['answer'], userAnswer=answer)
-
+    ua = UserAnswer.objects.create(ip_addr=ip, education=education)
+    answers = [Answer(question_id=ans['id'], answer=ans['answer'], userAnswer=ua) for ans in serialized_data['questions']]
+    Answer.objects.bulk_create(answers)
 
 @api_view(['POST'])
 @parser_classes([JSONParser])
