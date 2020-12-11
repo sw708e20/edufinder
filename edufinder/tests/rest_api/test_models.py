@@ -28,6 +28,3 @@ class AnswerTests(TestCase):
         with self.assertRaises(IntegrityError):
             answer = Answer.objects.create(question=question, answer=AnswerChoice.NO,
                                            userAnswer=user_answer)
-            answer.full_clean()
-
-
